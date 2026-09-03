@@ -16,5 +16,5 @@ SecurityAlert
     AlertCount = count(),
     DistinctAlertNames = dcount(AlertName),
     Techniques = make_set(TechniquesRaw, 20)
-    by Tactic, Severity
+    by Tactic, AlertSeverity
 | sort by AlertCount desc

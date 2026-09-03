@@ -94,7 +94,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "SecurityAlert\n| where TimeGenerated {TimeRange}\n| summarize AlertCount = count() by Severity\n| sort by AlertCount desc",
+              "query": "SecurityAlert\n| where TimeGenerated {TimeRange}\n| summarize AlertCount = count() by AlertSeverity\n| sort by AlertCount desc",
               "size": 0,
               "queryType": 0,
               "resourceType": "microsoft.operationalinsights/workspaces",
