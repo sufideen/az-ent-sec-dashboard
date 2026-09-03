@@ -70,6 +70,7 @@ Repeat for `test` and `prod`, changing the parameter file and resource group.
 ## Branch protection strategy
 
 - `main` is protected: require a pull request, require at least 1 approving review, dismiss stale approvals on new commits, disallow force-push and branch deletion.
+- **Owner sign-off**: `.github/CODEOWNERS` names `@sufideen` as owner of the entire repository, so every PR automatically requests their review. This only becomes a hard gate once **"Require review from Code Owners"** is also turned on under Settings > Branches > Branch protection rules > `main` — CODEOWNERS alone requests the review but does not by itself block merging without that setting enabled. Neither GitHub's REST/GraphQL API nor the MCP GitHub server used by this workflow exposes a branch-protection-write endpoint in this environment, so this one setting has to be applied by hand, once, by someone with admin rights on the repo (`sufideen` or an org owner).
 - Required status checks — GitHub evaluates required checks at the **job** level, not the workflow name, so select each of these individually under Settings > Branches > Branch protection rules > `main` (they only appear in the picker after each workflow has run at least once on the repo):
   - From `bicep-lint.yml`: `lint`
   - From `security-scan.yml`: `microsoft-security-devops`, `checkov`, `gitleaks`, `psrule`

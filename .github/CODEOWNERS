@@ -1,0 +1,11 @@
+# CODEOWNERS
+#
+# Requires GitHub review from the named owner(s) on every pull request that
+# touches a matching path. This alone does not block merging - branch
+# protection on `main` must also have "Require review from Code Owners"
+# enabled (Settings > Branches > Branch protection rules > main). See
+# docs/deployment-guide.md > Branch protection strategy.
+
+# Default owner for the entire repository: every PR requires review and
+# approval from sufideen.
+* @sufideen
