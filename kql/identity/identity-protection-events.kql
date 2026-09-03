@@ -1,0 +1,21 @@
+// ============================================================================
+// Query: Identity Protection Events
+// Purpose: Risk detections raised by Entra ID Identity Protection (risky
+// sign-ins and risky users combined), for the Zero Trust dashboard.
+// Table: AADUserRiskEvents
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+AADUserRiskEvents
+| where TimeGenerated {TimeRange}
+| project
+    TimeGenerated,
+    UserPrincipalName,
+    RiskEventType,
+    RiskLevel,
+    RiskState,
+    RiskDetail,
+    IpAddress,
+    Location = strcat(tostring(parse_json(Location).city), ', ', tostring(parse_json(Location).countryOrRegion)),
+    DetectionTimingType,
+    Source
+| sort by TimeGenerated desc

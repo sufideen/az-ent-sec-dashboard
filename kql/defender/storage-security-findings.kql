@@ -1,0 +1,20 @@
+// ============================================================================
+// Query: Storage Security Findings
+// Purpose: Unhealthy Defender for Storage recommendations (public access,
+// missing encryption, network restrictions), for the SOC dashboard.
+// Table: SecurityRecommendation
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+SecurityRecommendation
+| where TimeGenerated {TimeRange}
+| summarize arg_max(TimeGenerated, *) by RecommendationName, AssessedResourceId
+| where RecommendationState =~ 'Unhealthy'
+| where AssessedResourceId has '/providers/microsoft.storage/storageaccounts/'
+| project
+    TimeGenerated,
+    StorageAccountResourceId = AssessedResourceId,
+    StorageAccountName = extract(@'storageaccounts/([^/]+)', 1, AssessedResourceId),
+    RecommendationDisplayName,
+    RecommendationSeverity,
+    RemediationDescription
+| sort by RecommendationSeverity asc

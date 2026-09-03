@@ -1,0 +1,19 @@
+// ============================================================================
+// Query: Conditional Access Failures
+// Purpose: Sign-ins blocked or requiring unmet Conditional Access controls,
+// for the Zero Trust dashboard's "CA success rate" and failure drill-down.
+// Table: SigninLogs
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+SigninLogs
+| where TimeGenerated {TimeRange}
+| mv-expand CA = ConditionalAccessPolicies
+| where tostring(CA.result) in ('failure', 'notApplied')
+| extend PolicyName = tostring(CA.displayName), PolicyResult = tostring(CA.result)
+| summarize
+    FailureCount = countif(PolicyResult == 'failure'),
+    NotAppliedCount = countif(PolicyResult == 'notApplied'),
+    AffectedUsers = dcount(UserPrincipalName)
+    by PolicyName, AppDisplayName
+| extend TotalEvaluations = FailureCount + NotAppliedCount
+| sort by FailureCount desc

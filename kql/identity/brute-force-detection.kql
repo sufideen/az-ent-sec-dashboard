@@ -1,0 +1,34 @@
+// ============================================================================
+// Query: Brute Force Detection
+// Purpose: Flag accounts with a high volume of failed sign-ins followed by a
+// success within a short window (classic password-spray / brute-force
+// pattern), for Sentinel alerting and SOC triage.
+// Table: SigninLogs
+// Parameters (workbook-bound): {TimeRange}
+// Used by: modules/sentinel-rules.bicep (Scheduled Analytics Rule)
+// ============================================================================
+let FailureThreshold = 5;
+let LookbackWindow = 30m;
+let FailedSignins =
+    SigninLogs
+    | where TimeGenerated {TimeRange}
+    | where ResultType !in ('0', '50125', '50140')
+    | summarize FailedAttempts = count(), FailedIPs = make_set(IPAddress, 10), LastFailure = max(TimeGenerated)
+        by UserPrincipalName, bin(TimeGenerated, LookbackWindow)
+    | where FailedAttempts >= FailureThreshold;
+let SuccessfulSignins =
+    SigninLogs
+    | where TimeGenerated {TimeRange}
+    | where ResultType == '0'
+    | project UserPrincipalName, SuccessTime = TimeGenerated, SuccessIP = IPAddress;
+FailedSignins
+| join kind=inner SuccessfulSignins on UserPrincipalName
+| where SuccessTime between (LastFailure .. (LastFailure + LookbackWindow))
+| project
+    UserPrincipalName,
+    FailedAttempts,
+    FailedIPs,
+    LastFailureTime = LastFailure,
+    SuccessTime,
+    SuccessIP
+| sort by FailedAttempts desc

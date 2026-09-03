@@ -1,0 +1,20 @@
+// ============================================================================
+// Query: MITRE Techniques
+// Purpose: MITRE ATT&CK tactic/technique coverage across fired alerts, for
+// the SOC dashboard's MITRE ATT&CK Mapping tile.
+// Table: SecurityAlert
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+SecurityAlert
+| where TimeGenerated {TimeRange}
+| extend Tactics = split(tostring(Tactics), ',')
+| extend TechniquesRaw = tostring(Techniques)
+| mv-expand Tactic = Tactics to typeof(string)
+| extend Tactic = trim(' ', Tactic)
+| where isnotempty(Tactic)
+| summarize
+    AlertCount = count(),
+    DistinctAlertNames = dcount(AlertName),
+    Techniques = make_set(TechniquesRaw, 20)
+    by Tactic, Severity
+| sort by AlertCount desc

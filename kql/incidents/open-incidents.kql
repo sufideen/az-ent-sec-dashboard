@@ -1,0 +1,23 @@
+// ============================================================================
+// Query: Open Incidents
+// Purpose: Count and list all Sentinel incidents currently in an open state
+// (New or Active), for the Executive and SOC dashboards.
+// Table: SecurityIncident
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+SecurityIncident
+| where TimeGenerated {TimeRange}
+| summarize arg_max(TimeGenerated, *) by IncidentNumber
+| where Status in ('New', 'Active')
+| project
+    IncidentNumber,
+    Title,
+    Severity,
+    Status,
+    Owner = tostring(Owner.assignedTo),
+    CreatedTime = CreatedTime,
+    LastModifiedTime = LastModifiedTime,
+    AgeHours = round(datetime_diff('hour', now(), CreatedTime), 1),
+    Classification,
+    IncidentUrl
+| sort by AgeHours desc

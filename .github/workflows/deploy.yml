@@ -1,0 +1,102 @@
+name: Deploy
+
+# Progressive delivery: Dev deploys automatically on merge to main. Test and
+# Prod are gated by GitHub Environment protection rules (required reviewers)
+# configured in Settings > Environments - see docs/deployment-guide.md for
+# the exact reviewer/branch-policy setup ("Deployment Approval").
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'bicep/**'
+      - 'modules/**'
+      - 'workbooks/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy (leave blank to run the full dev->test->prod chain)'
+        type: choice
+        options: [dev, test, prod]
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-dev:
+    name: Deploy - Dev
+    if: ${{ github.event.inputs.environment == '' || github.event.inputs.environment == 'dev' }}
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy Bicep (dev)
+        uses: azure/arm-deploy@v2
+        with:
+          scope: resourcegroup
+          resourceGroupName: ${{ vars.RESOURCE_GROUP_DEV }}
+          template: bicep/main.bicep
+          parameters: >
+            bicep/main.dev.bicepparam
+            teamsWebhookUrl=${{ secrets.TEAMS_WEBHOOK_URL_DEV }}
+          deploymentMode: Incremental
+          failOnStdErr: false
+
+  deploy-test:
+    name: Deploy - Test
+    needs: deploy-dev
+    if: ${{ always() && (needs.deploy-dev.result == 'success' || needs.deploy-dev.result == 'skipped') && (github.event.inputs.environment == '' || github.event.inputs.environment == 'test') }}
+    runs-on: ubuntu-latest
+    environment: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy Bicep (test)
+        uses: azure/arm-deploy@v2
+        with:
+          scope: resourcegroup
+          resourceGroupName: ${{ vars.RESOURCE_GROUP_TEST }}
+          template: bicep/main.bicep
+          parameters: >
+            bicep/main.test.bicepparam
+            teamsWebhookUrl=${{ secrets.TEAMS_WEBHOOK_URL_TEST }}
+          deploymentMode: Incremental
+          failOnStdErr: false
+
+  deploy-prod:
+    name: Deploy - Prod
+    needs: deploy-test
+    # 'environment: production' enforces the required-reviewer approval gate
+    # configured in Settings > Environments > production ("Deployment Approval").
+    if: ${{ always() && (needs.deploy-test.result == 'success' || needs.deploy-test.result == 'skipped') && (github.event.inputs.environment == '' || github.event.inputs.environment == 'prod') }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy Bicep (prod)
+        uses: azure/arm-deploy@v2
+        with:
+          scope: resourcegroup
+          resourceGroupName: ${{ vars.RESOURCE_GROUP_PROD }}
+          template: bicep/main.bicep
+          parameters: >
+            bicep/main.prod.bicepparam
+            teamsWebhookUrl=${{ secrets.TEAMS_WEBHOOK_URL_PROD }}
+          deploymentMode: Incremental
+          failOnStdErr: false

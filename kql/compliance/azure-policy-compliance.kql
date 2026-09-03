@@ -1,0 +1,23 @@
+// ============================================================================
+// Query: Azure Policy Compliance
+// Purpose: Non-compliant Azure Policy assignments, for the Executive
+// Compliance Status tile.
+// Engine: Azure Resource Graph (NOT Log Analytics) - run via the
+// 'Azure Resource Graph' query type in the workbook, `az graph query`, or
+// the Resource Graph Explorer. Uses the built-in PolicyResources table,
+// which Resource Graph maintains from Azure Policy Insights so compliance
+// can be queried tenant/subscription-wide without per-resource API calls.
+// ============================================================================
+PolicyResources
+| where type == 'microsoft.policyinsights/policystates'
+| extend complianceState = tostring(properties.complianceState)
+| extend policyAssignmentName = tostring(properties.policyAssignmentName)
+| extend policyDefinitionName = tostring(properties.policyDefinitionName)
+| summarize
+    CompliantCount = countif(complianceState =~ 'Compliant'),
+    NonCompliantCount = countif(complianceState =~ 'NonCompliant')
+    by policyAssignmentName
+| extend
+    TotalEvaluated = CompliantCount + NonCompliantCount,
+    CompliancePercentage = round(100.0 * CompliantCount / (CompliantCount + NonCompliantCount), 1)
+| sort by CompliancePercentage asc

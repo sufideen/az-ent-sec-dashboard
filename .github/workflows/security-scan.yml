@@ -1,0 +1,91 @@
+name: Security Scan
+
+# Static security scanning for IaC misconfigurations and accidental secret
+# commits. Blocks merge on HIGH/CRITICAL findings.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  microsoft-security-devops:
+    name: Microsoft Security DevOps (IaC + secrets)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Microsoft Security DevOps
+        id: msdo
+        uses: microsoft/security-devops-action@v1
+        with:
+          categories: 'IaC,secrets'
+
+      - name: Upload SARIF to code scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: ${{ steps.msdo.outputs.sarifFile }}
+
+  checkov:
+    name: Checkov (Bicep IaC policy scan)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          framework: bicep
+          output_format: sarif
+          output_file_path: checkov-results.sarif
+          soft_fail: false
+
+      - name: Upload SARIF to code scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: checkov-results.sarif
+
+  gitleaks:
+    name: Gitleaks (secret scanning)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  psrule:
+    name: PSRule for Azure (Well-Architected checks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run PSRule analysis
+        uses: microsoft/ps-rule@v2.9.0
+        with:
+          modules: 'PSRule.Rules.Azure'
+          inputPath: 'bicep/'
+          outputFormat: Sarif
+          outputPath: reports/psrule-results.sarif
+
+      - name: Upload SARIF to code scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: reports/psrule-results.sarif

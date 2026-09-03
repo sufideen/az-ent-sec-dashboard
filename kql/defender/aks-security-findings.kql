@@ -1,0 +1,20 @@
+// ============================================================================
+// Query: AKS Security Findings
+// Purpose: Unhealthy Defender for Containers recommendations scoped to AKS
+// clusters, for the SOC dashboard.
+// Table: SecurityRecommendation
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+SecurityRecommendation
+| where TimeGenerated {TimeRange}
+| summarize arg_max(TimeGenerated, *) by RecommendationName, AssessedResourceId
+| where RecommendationState =~ 'Unhealthy'
+| where AssessedResourceId has '/providers/microsoft.containerservice/managedclusters/'
+| project
+    TimeGenerated,
+    ClusterResourceId = AssessedResourceId,
+    ClusterName = extract(@'managedclusters/([^/]+)', 1, AssessedResourceId),
+    RecommendationDisplayName,
+    RecommendationSeverity,
+    RemediationDescription
+| sort by RecommendationSeverity asc

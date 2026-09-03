@@ -1,0 +1,246 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# \ud83d\udd10 Zero Trust Dashboard\nIdentity-centric Zero Trust posture: MFA adoption, Conditional Access effectiveness, risky users, privileged access, device compliance, and guest accounts."
+      },
+      "name": "header"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "3e3b237a-e589-c108-9603-a706bbb9b065",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "value": {
+              "durationMs": 86400000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 2592000000
+                }
+              ]
+            }
+          },
+          {
+            "id": "a810601b-b3d7-4236-ccc8-67ef614e8c48",
+            "version": "KqlParameterItem/1.0",
+            "name": "Workspace",
+            "type": 5,
+            "isRequired": true,
+            "value": "value::1",
+            "typeSettings": {
+              "resourceTypeFilter": {
+                "microsoft.operationalinsights/workspaces": true
+              },
+              "additionalResourceOptions": []
+            }
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "AADUserRegistrationDetails\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, IsMfaRegistered) by UserPrincipalName\n| summarize Registered = countif(IsMfaRegistered == true), Total = count()\n| extend MfaAdoptionPercentage = round(100.0 * Registered / Total, 1)\n| project MfaAdoptionPercentage",
+              "size": 0,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
+              "tileSettings": {
+                "showBorder": false,
+                "leftContent": {
+                  "columnMatch": "MfaAdoptionPercentage",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "greenRed"
+                  }
+                }
+              }
+            },
+            "name": "MFA Adoption %"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SigninLogs\n| where TimeGenerated {TimeRange}\n| mv-expand CA = ConditionalAccessPolicies\n| where tostring(CA.result) in ('success','failure','notApplied')\n| summarize Success = countif(tostring(CA.result) == 'success'), Total = count()\n| extend ConditionalAccessSuccessRate = round(100.0 * Success / Total, 1)\n| project ConditionalAccessSuccessRate",
+              "size": 0,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
+              "tileSettings": {
+                "showBorder": false,
+                "leftContent": {
+                  "columnMatch": "ConditionalAccessSuccessRate",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "greenRed"
+                  }
+                }
+              }
+            },
+            "name": "Conditional Access Success Rate"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SigninLogs\n| where TimeGenerated {TimeRange}\n| extend IsCompliant = tobool(DeviceDetail.isCompliant)\n| summarize Compliant = countif(IsCompliant == true), NonCompliant = countif(IsCompliant == false or isempty(IsCompliant))\n| extend DeviceCompliancePercentage = round(100.0 * Compliant / (Compliant + NonCompliant), 1)\n| project Compliant, NonCompliant, DeviceCompliancePercentage",
+              "size": 0,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
+              "tileSettings": {
+                "showBorder": false,
+                "leftContent": {
+                  "columnMatch": "DeviceCompliancePercentage",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "greenRed"
+                  }
+                }
+              }
+            },
+            "name": "Device Compliance %"
+          }
+        ]
+      },
+      "name": "Zero Trust KPIs"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AADRiskyUsers\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by UserPrincipalName\n| where RiskState in ('atRisk','confirmedCompromised')\n| project UserPrincipalName, RiskLevel, RiskState, RiskLastUpdatedDateTime\n| sort by RiskLevel desc",
+        "size": 0,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table",
+        "crossComponentResources": [
+          "{Workspace}"
+        ]
+      },
+      "name": "Risky Users"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "let PrivilegedRoles = dynamic(['Global Administrator','Privileged Role Administrator','Security Administrator','Exchange Administrator','SharePoint Administrator','User Administrator','Application Administrator','Cloud Application Administrator']);\nAuditLogs\n| where TimeGenerated {TimeRange}\n| where Category == 'RoleManagement'\n| where OperationName in ('Add member to role','Add eligible member to role','Remove member from role')\n| extend RoleName = tostring(TargetResources[0].modifiedProperties[1].newValue)\n| extend TargetUser = tostring(TargetResources[0].userPrincipalName)\n| where RoleName has_any (PrivilegedRoles)\n| project TimeGenerated, OperationName, RoleName, TargetUser\n| sort by TimeGenerated desc",
+              "size": 0,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "table",
+              "crossComponentResources": [
+                "{Workspace}"
+              ]
+            },
+            "name": "Privileged Account Role Changes"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "AuditLogs\n| where TimeGenerated {TimeRange}\n| where Category == 'RoleManagement'\n| where OperationName in ('Add member to role completed (PIM activation)','Add member to role in PIM completed (permanent)')\n| extend ActivatedRole = tostring(TargetResources[0].modifiedProperties[1].newValue), ActivatedBy = tostring(InitiatedBy.user.userPrincipalName)\n| project TimeGenerated, ActivatedBy, ActivatedRole\n| sort by TimeGenerated desc",
+              "size": 0,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "table",
+              "crossComponentResources": [
+                "{Workspace}"
+              ]
+            },
+            "name": "PIM Activations"
+          }
+        ]
+      },
+      "name": "Privileged Access"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SigninLogs\n| where TimeGenerated {TimeRange}\n| extend IsCompliant = tobool(DeviceDetail.isCompliant)\n| summarize Compliant = countif(IsCompliant == true), NonCompliant = countif(IsCompliant == false or isempty(IsCompliant))\n| extend DeviceCompliancePercentage = round(100.0 * Compliant / (Compliant + NonCompliant), 1)\n| project Compliant, NonCompliant, DeviceCompliancePercentage",
+        "size": 0,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table",
+        "crossComponentResources": [
+          "{Workspace}"
+        ]
+      },
+      "name": "Device Compliance Detail"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SigninLogs\n| where TimeGenerated {TimeRange}\n| where UserPrincipalName has '#EXT#'\n| summarize SignInCount = count(), LastSignIn = max(TimeGenerated) by UserPrincipalName\n| sort by SignInCount desc",
+        "size": 0,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table",
+        "crossComponentResources": [
+          "{Workspace}"
+        ]
+      },
+      "name": "Guest Users"
+    }
+  ],
+  "isLocked": false,
+  "fallbackResourceIds": [],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

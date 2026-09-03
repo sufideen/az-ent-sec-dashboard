@@ -1,0 +1,47 @@
+// ============================================================================
+// Query: Impossible Travel
+// Purpose: Detect successful sign-ins by the same user from two locations
+// whose distance/time delta implies travel faster than commercially
+// possible (~900 km/h with a small buffer).
+// Table: SigninLogs
+// Parameters (workbook-bound): {TimeRange}
+// Used by: modules/sentinel-rules.bicep (Scheduled Analytics Rule)
+// ============================================================================
+let MaxPlausibleSpeedKmh = 900.0;
+SigninLogs
+| where TimeGenerated {TimeRange}
+| where ResultType == '0'
+| where isnotempty(LocationDetails)
+| extend
+    Latitude = todouble(LocationDetails.geoCoordinates.latitude),
+    Longitude = todouble(LocationDetails.geoCoordinates.longitude),
+    City = tostring(LocationDetails.city),
+    Country = tostring(LocationDetails.countryOrRegion)
+| where isnotempty(Latitude) and isnotempty(Longitude)
+| sort by UserPrincipalName asc, TimeGenerated asc
+| serialize
+| extend
+    PrevTime = prev(TimeGenerated),
+    PrevUser = prev(UserPrincipalName),
+    PrevLat = prev(Latitude),
+    PrevLon = prev(Longitude),
+    PrevCity = prev(City),
+    PrevCountry = prev(Country)
+| where UserPrincipalName == PrevUser
+| extend
+    HoursElapsed = datetime_diff('second', TimeGenerated, PrevTime) / 3600.0,
+    DistanceKm = geo_distance_2points(Longitude, Latitude, PrevLon, PrevLat) / 1000.0
+| where HoursElapsed > 0 and DistanceKm > 250
+| extend ImpliedSpeedKmh = DistanceKm / HoursElapsed
+| where ImpliedSpeedKmh > MaxPlausibleSpeedKmh
+| project
+    TimeGenerated,
+    UserPrincipalName,
+    FromLocation = strcat(PrevCity, ', ', PrevCountry),
+    ToLocation = strcat(City, ', ', Country),
+    DistanceKm = round(DistanceKm, 0),
+    HoursElapsed = round(HoursElapsed, 2),
+    ImpliedSpeedKmh = round(ImpliedSpeedKmh, 0),
+    IPAddress,
+    AppDisplayName
+| sort by ImpliedSpeedKmh desc

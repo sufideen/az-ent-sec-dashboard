@@ -1,0 +1,18 @@
+// ============================================================================
+// Query: Failed Sign-ins
+// Purpose: Failed interactive sign-ins by user/app/location for SOC triage.
+// Table: SigninLogs (Entra ID diagnostic logs)
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+SigninLogs
+| where TimeGenerated {TimeRange}
+| where ResultType !in ('0', '50125', '50140')
+| extend Location = strcat(tostring(LocationDetails.city), ', ', tostring(LocationDetails.countryOrRegion))
+| summarize
+    FailureCount = count(),
+    DistinctIPs = dcount(IPAddress),
+    LastFailure = max(TimeGenerated),
+    SampleErrors = make_set(ResultDescription, 5)
+    by UserPrincipalName, AppDisplayName, Location, ResultType
+| where FailureCount >= 3
+| sort by FailureCount desc

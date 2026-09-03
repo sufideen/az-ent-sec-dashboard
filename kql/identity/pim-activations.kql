@@ -1,0 +1,17 @@
+// ============================================================================
+// Query: PIM Activations
+// Purpose: Privileged Identity Management role activations, for the Zero
+// Trust dashboard.
+// Table: AuditLogs (category: RoleManagement, PIM activation events)
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+AuditLogs
+| where TimeGenerated {TimeRange}
+| where Category == 'RoleManagement'
+| where OperationName in ('Add member to role completed (PIM activation)', 'Add member to role in PIM completed (permanent)')
+| extend
+    ActivatedRole = tostring(TargetResources[0].modifiedProperties[1].newValue),
+    ActivatedBy = tostring(InitiatedBy.user.userPrincipalName),
+    Justification = tostring(TargetResources[0].modifiedProperties[3].newValue)
+| project TimeGenerated, ActivatedBy, ActivatedRole, Justification, Result, CorrelationId
+| sort by TimeGenerated desc

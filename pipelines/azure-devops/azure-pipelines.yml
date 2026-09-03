@@ -1,0 +1,232 @@
+# ============================================================================
+# Azure DevOps Pipeline: azure-security-operations-platform
+#
+# Stages: Validate -> SecurityScan -> WhatIf -> DeployDev -> DeployTest -> DeployProd
+#
+# Prerequisites (configure in the ADO project before first run):
+#   - Service connections: 'arm-secops-dev', 'arm-secops-test', 'arm-secops-prod'
+#     (ARM service connections scoped to each environment's resource group,
+#      using workload-identity federation - no client secrets).
+#   - Environments: 'secops-dev', 'secops-test', 'secops-prod', with
+#     'secops-test' and 'secops-prod' configured with Approvals & Checks
+#     (required approvers) under Pipelines > Environments - this implements
+#     the "Deployment Approval" gate.
+#   - Variable group 'secops-alerting-secrets' (linked to Key Vault) holding
+#     TeamsWebhookUrlDev / TeamsWebhookUrlTest / TeamsWebhookUrlProd.
+# ============================================================================
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - bicep/*
+      - modules/*
+      - workbooks/*
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - bicep/*
+      - modules/*
+      - workbooks/*
+
+variables:
+  - group: secops-alerting-secrets
+  - name: bicepEntryPoint
+    value: 'bicep/main.bicep'
+
+stages:
+  # --------------------------------------------------------------------
+  - stage: Validate
+  # --------------------------------------------------------------------
+    displayName: 'Validate (Bicep Lint & Build)'
+    jobs:
+      - job: LintAndBuild
+        displayName: 'Lint & build all Bicep templates'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: AzureCLI@2
+            displayName: 'Install Bicep'
+            inputs:
+              azureSubscription: 'arm-secops-dev'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: az bicep install && az bicep version
+
+          - script: |
+              set -euo pipefail
+              az bicep build --file $(bicepEntryPoint) --stdout > /dev/null
+              for f in modules/*.bicep; do
+                echo "Linting $f"
+                az bicep build --file "$f" --stdout > /dev/null
+              done
+              for env in dev test prod; do
+                az bicep build-params --file "bicep/main.$env.bicepparam" --outfile "/tmp/main.$env.parameters.json"
+              done
+              for f in workbooks/*.json; do
+                python3 -m json.tool "$f" > /dev/null
+              done
+            displayName: 'bicep build + bicepparam build + workbook JSON validation'
+
+  # --------------------------------------------------------------------
+  - stage: SecurityScan
+  # --------------------------------------------------------------------
+    displayName: 'Security Scan'
+    dependsOn: Validate
+    jobs:
+      - job: IaCScan
+        displayName: 'Microsoft Security DevOps + PSRule for Azure'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: MicrosoftSecurityDevOps@1
+            displayName: 'Microsoft Security DevOps (IaC + secrets)'
+            inputs:
+              categories: 'IaC,secrets'
+
+          - task: PowerShell@2
+            displayName: 'PSRule for Azure'
+            inputs:
+              targetType: inline
+              script: |
+                Install-Module -Name PSRule.Rules.Azure -Scope CurrentUser -Force
+                Invoke-PSRule -InputPath 'bicep/' -Module PSRule.Rules.Azure -Format File -OutputFormat NUnit3 -OutputPath 'reports/psrule-results.xml'
+
+          - task: PublishTestResults@2
+            displayName: 'Publish PSRule results'
+            condition: always()
+            inputs:
+              testResultsFormat: 'NUnit'
+              testResultsFiles: 'reports/psrule-results.xml'
+              failTaskOnFailedTests: true
+
+  # --------------------------------------------------------------------
+  - stage: WhatIf
+  # --------------------------------------------------------------------
+    displayName: 'What-If Deployment'
+    dependsOn: SecurityScan
+    jobs:
+      - job: WhatIfAll
+        displayName: 'What-If per environment'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          matrix:
+            dev:
+              envName: dev
+              serviceConnection: arm-secops-dev
+              resourceGroup: rg-contoso-secops-dev-eus-001
+            test:
+              envName: test
+              serviceConnection: arm-secops-test
+              resourceGroup: rg-contoso-secops-test-eus-001
+            prod:
+              envName: prod
+              serviceConnection: arm-secops-prod
+              resourceGroup: rg-contoso-secops-prod-eus-001
+        steps:
+          - task: AzureCLI@2
+            displayName: 'az deployment group what-if ($(envName))'
+            inputs:
+              azureSubscription: '$(serviceConnection)'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az deployment group what-if \
+                  --resource-group "$(resourceGroup)" \
+                  --template-file "$(bicepEntryPoint)" \
+                  --parameters "bicep/main.$(envName).bicepparam" \
+                  --result-format FullResourcePayloads
+
+  # --------------------------------------------------------------------
+  - stage: DeployDev
+  # --------------------------------------------------------------------
+    displayName: 'Deploy - Dev'
+    dependsOn: WhatIf
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployDev
+        displayName: 'Deploy to Dev'
+        environment: 'secops-dev'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureCLI@2
+                  displayName: 'Deploy Bicep (dev)'
+                  inputs:
+                    azureSubscription: 'arm-secops-dev'
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      az deployment group create \
+                        --resource-group rg-contoso-secops-dev-eus-001 \
+                        --template-file $(bicepEntryPoint) \
+                        --parameters bicep/main.dev.bicepparam \
+                        --parameters teamsWebhookUrl="$(TeamsWebhookUrlDev)"
+
+  # --------------------------------------------------------------------
+  - stage: DeployTest
+  # --------------------------------------------------------------------
+    displayName: 'Deploy - Test'
+    dependsOn: DeployDev
+    condition: succeeded()
+    jobs:
+      - deployment: DeployTest
+        displayName: 'Deploy to Test'
+        environment: 'secops-test'  # Approvals & Checks configured on this environment
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureCLI@2
+                  displayName: 'Deploy Bicep (test)'
+                  inputs:
+                    azureSubscription: 'arm-secops-test'
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      az deployment group create \
+                        --resource-group rg-contoso-secops-test-eus-001 \
+                        --template-file $(bicepEntryPoint) \
+                        --parameters bicep/main.test.bicepparam \
+                        --parameters teamsWebhookUrl="$(TeamsWebhookUrlTest)"
+
+  # --------------------------------------------------------------------
+  - stage: DeployProd
+  # --------------------------------------------------------------------
+    displayName: 'Deploy - Prod'
+    dependsOn: DeployTest
+    condition: succeeded()
+    jobs:
+      - deployment: DeployProd
+        displayName: 'Deploy to Prod'
+        environment: 'secops-prod'  # Approvals & Checks (required reviewers) configured on this environment
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureCLI@2
+                  displayName: 'Deploy Bicep (prod)'
+                  inputs:
+                    azureSubscription: 'arm-secops-prod'
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      az deployment group create \
+                        --resource-group rg-contoso-secops-prod-eus-001 \
+                        --template-file $(bicepEntryPoint) \
+                        --parameters bicep/main.prod.bicepparam \
+                        --parameters teamsWebhookUrl="$(TeamsWebhookUrlProd)"

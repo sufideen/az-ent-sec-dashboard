@@ -1,0 +1,28 @@
+// ============================================================================
+// Query: Privileged Account Monitoring
+// Purpose: Directory role assignment changes for privileged Entra ID roles
+// (Global Admin, Privileged Role Admin, Security Admin, etc.), plus sign-in
+// activity for currently privileged accounts.
+// Tables: AuditLogs, SigninLogs
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+let PrivilegedRoles = dynamic([
+    'Global Administrator',
+    'Privileged Role Administrator',
+    'Security Administrator',
+    'Exchange Administrator',
+    'SharePoint Administrator',
+    'User Administrator',
+    'Application Administrator',
+    'Cloud Application Administrator'
+]);
+AuditLogs
+| where TimeGenerated {TimeRange}
+| where Category == 'RoleManagement'
+| where OperationName in ('Add member to role', 'Add eligible member to role', 'Remove member from role')
+| extend RoleName = tostring(TargetResources[0].modifiedProperties[1].newValue)
+| extend TargetUser = tostring(TargetResources[0].userPrincipalName)
+| extend InitiatedBy = tostring(InitiatedBy.user.userPrincipalName)
+| where RoleName has_any (PrivilegedRoles)
+| project TimeGenerated, OperationName, RoleName, TargetUser, InitiatedBy, Result, CorrelationId
+| sort by TimeGenerated desc

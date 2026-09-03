@@ -1,0 +1,222 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# \ud83d\udd0e SOC Dashboard\nReal-time triage view for security analysts: active incidents, alert volume, MITRE ATT&CK coverage, and identity threat signals."
+      },
+      "name": "header"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "1ef7b6db-880b-9299-b519-bcb06e4126b6",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "value": {
+              "durationMs": 86400000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 2592000000
+                }
+              ]
+            }
+          },
+          {
+            "id": "0e1e888f-3ab5-564b-116b-deb50307976a",
+            "version": "KqlParameterItem/1.0",
+            "name": "Workspace",
+            "type": 5,
+            "isRequired": true,
+            "value": "value::1",
+            "typeSettings": {
+              "resourceTypeFilter": {
+                "microsoft.operationalinsights/workspaces": true
+              },
+              "additionalResourceOptions": []
+            }
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SecurityIncident\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by IncidentNumber\n| where Status in ('New','Active')\n| project IncidentNumber, Title, Severity, Status, Owner = tostring(Owner.assignedTo), CreatedTime, IncidentUrl\n| sort by CreatedTime desc",
+        "size": 0,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table",
+        "crossComponentResources": [
+          "{Workspace}"
+        ]
+      },
+      "name": "Active Incidents"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SecurityAlert\n| where TimeGenerated {TimeRange}\n| summarize AlertCount = count() by Severity\n| sort by AlertCount desc",
+              "size": 0,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "piechart",
+              "crossComponentResources": [
+                "{Workspace}"
+              ]
+            },
+            "name": "Alerts by Severity"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SecurityAlert\n| where TimeGenerated {TimeRange}\n| extend Tactics = split(tostring(Tactics), ',')\n| mv-expand Tactic = Tactics to typeof(string)\n| extend Tactic = trim(' ', Tactic)\n| where isnotempty(Tactic)\n| summarize AlertCount = count() by Tactic\n| sort by AlertCount desc",
+              "size": 0,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "barchart",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
+              "chartSettings": {
+                "xAxis": "Tactic",
+                "yAxis": [
+                  "AlertCount"
+                ]
+              }
+            },
+            "name": "MITRE ATT&CK Mapping"
+          }
+        ]
+      },
+      "name": "Alert Overview"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "CommonSecurityLog\n| where TimeGenerated {TimeRange}\n| where DeviceAction in ('Deny', 'Drop', 'Block')\n| summarize BlockedAttempts = count() by SourceIP\n| top 10 by BlockedAttempts desc",
+        "size": 0,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table",
+        "crossComponentResources": [
+          "{Workspace}"
+        ]
+      },
+      "name": "Top Attack Sources"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SigninLogs\n| where TimeGenerated {TimeRange}\n| where ResultType !in ('0','50125','50140')\n| summarize FailureCount = count() by UserPrincipalName, ResultType\n| where FailureCount >= 3\n| sort by FailureCount desc",
+              "size": 0,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "table",
+              "crossComponentResources": [
+                "{Workspace}"
+              ]
+            },
+            "name": "Failed Logins"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "let MaxPlausibleSpeedKmh = 900.0;\nSigninLogs\n| where TimeGenerated {TimeRange}\n| where ResultType == '0'\n| where isnotempty(LocationDetails)\n| extend Latitude = todouble(LocationDetails.geoCoordinates.latitude), Longitude = todouble(LocationDetails.geoCoordinates.longitude)\n| where isnotempty(Latitude) and isnotempty(Longitude)\n| sort by UserPrincipalName asc, TimeGenerated asc\n| serialize\n| extend PrevTime = prev(TimeGenerated), PrevUser = prev(UserPrincipalName), PrevLat = prev(Latitude), PrevLon = prev(Longitude)\n| where UserPrincipalName == PrevUser\n| extend HoursElapsed = datetime_diff('second', TimeGenerated, PrevTime) / 3600.0, DistanceKm = geo_distance_2points(Longitude, Latitude, PrevLon, PrevLat) / 1000.0\n| where HoursElapsed > 0 and DistanceKm > 250\n| extend ImpliedSpeedKmh = DistanceKm / HoursElapsed\n| where ImpliedSpeedKmh > MaxPlausibleSpeedKmh\n| project TimeGenerated, UserPrincipalName, DistanceKm = round(DistanceKm,0), ImpliedSpeedKmh = round(ImpliedSpeedKmh,0), IPAddress\n| sort by ImpliedSpeedKmh desc",
+              "size": 0,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "table",
+              "crossComponentResources": [
+                "{Workspace}"
+              ]
+            },
+            "name": "Suspicious Sign-ins (Impossible Travel)"
+          }
+        ]
+      },
+      "name": "Identity Threat Signals"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SecurityIncident\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by IncidentNumber\n| project IncidentNumber, Title, Severity, Status, Classification, CreatedTime\n| sort by CreatedTime desc",
+        "size": 0,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table",
+        "crossComponentResources": [
+          "{Workspace}"
+        ]
+      },
+      "name": "Sentinel Incidents"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "let TI = ThreatIntelligenceIndicator\n    | where TimeGenerated {TimeRange}\n    | where Active == true\n    | summarize arg_max(TimeGenerated, *) by IndicatorId\n    | project IndicatorId, NetworkIP, ThreatType, Description, ConfidenceScore = Confidence;\nTI\n| where isnotempty(NetworkIP)\n| join kind=inner (\n    CommonSecurityLog\n    | where TimeGenerated {TimeRange}\n    | project TimeGenerated, SourceIP, DestinationIP, DeviceAction\n) on $left.NetworkIP == $right.DestinationIP\n| project TimeGenerated, MatchedIndicator = NetworkIP, ThreatType, Description, SourceIP, DeviceAction\n| sort by TimeGenerated desc",
+        "size": 0,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table",
+        "crossComponentResources": [
+          "{Workspace}"
+        ]
+      },
+      "name": "Threat Intelligence Matches"
+    }
+  ],
+  "isLocked": false,
+  "fallbackResourceIds": [],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

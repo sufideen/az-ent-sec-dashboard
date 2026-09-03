@@ -1,0 +1,59 @@
+name: Bicep Lint
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'bicep/**'
+      - 'modules/**'
+      - 'workbooks/**'
+      - '.github/workflows/bicep-lint.yml'
+      - 'pipelines/github/bicep-lint.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'bicep/**'
+      - 'modules/**'
+      - 'workbooks/**'
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint & build Bicep templates
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, test, prod]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Bicep CLI
+        run: az bicep install
+
+      - name: Bicep lint (build with linter, warnings fail on 'error' level rules)
+        run: az bicep build --file bicep/main.bicep --stdout > /dev/null
+
+      - name: Validate module files compile individually
+        run: |
+          set -euo pipefail
+          for f in modules/*.bicep; do
+            echo "Linting $f"
+            az bicep build --file "$f" --stdout > /dev/null
+          done
+
+      - name: Build parameter file (${{ matrix.environment }})
+        run: |
+          az bicep build-params \
+            --file "bicep/main.${{ matrix.environment }}.bicepparam" \
+            --outfile "/tmp/main.${{ matrix.environment }}.parameters.json"
+
+      - name: Lint workbook JSON is well-formed
+        run: |
+          set -euo pipefail
+          for f in workbooks/*.json; do
+            echo "Validating JSON: $f"
+            python3 -m json.tool "$f" > /dev/null
+          done

@@ -1,0 +1,30 @@
+// ============================================================================
+// Query: Threat Intelligence Indicators
+// Purpose: Active TI indicators matched against log traffic (network,
+// DNS, sign-in) in the environment, for the SOC dashboard.
+// Tables: ThreatIntelligenceIndicator, CommonSecurityLog / SigninLogs
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+let TI = ThreatIntelligenceIndicator
+    | where TimeGenerated {TimeRange}
+    | where Active == true
+    | summarize arg_max(TimeGenerated, *) by IndicatorId
+    | project IndicatorId, IndicatorType = tostring(ObservableKey), NetworkIP, DomainName, Url, Description, ThreatType, ConfidenceScore = Confidence;
+TI
+| where isnotempty(NetworkIP)
+| join kind=inner (
+    CommonSecurityLog
+    | where TimeGenerated {TimeRange}
+    | project TimeGenerated, DeviceAction, SourceIP, DestinationIP, DeviceVendor
+) on $left.NetworkIP == $right.DestinationIP
+| project
+    TimeGenerated,
+    MatchedIndicator = NetworkIP,
+    ThreatType,
+    Description,
+    ConfidenceScore,
+    SourceIP,
+    DestinationIP,
+    DeviceAction,
+    DeviceVendor
+| sort by TimeGenerated desc

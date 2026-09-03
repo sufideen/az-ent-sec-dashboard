@@ -1,0 +1,20 @@
+// ============================================================================
+// Query: Compliance Findings
+// Purpose: Rolled-up compliance posture (Defender for Cloud unhealthy
+// recommendations by severity), for the Executive dashboard's Compliance
+// Status donut/summary tile.
+// Table: SecurityRecommendation
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+SecurityRecommendation
+| where TimeGenerated {TimeRange}
+| summarize arg_max(TimeGenerated, *) by RecommendationName, AssessedResourceId
+| summarize
+    Healthy = countif(RecommendationState =~ 'Healthy'),
+    Unhealthy = countif(RecommendationState =~ 'Unhealthy'),
+    NotApplicable = countif(RecommendationState =~ 'NotApplicable')
+    by RecommendationSeverity
+| extend Total = Healthy + Unhealthy + NotApplicable
+| extend CompliancePercentage = round(100.0 * Healthy / (Healthy + Unhealthy), 1)
+| project RecommendationSeverity, Healthy, Unhealthy, NotApplicable, Total, CompliancePercentage
+| sort by RecommendationSeverity asc

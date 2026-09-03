@@ -1,0 +1,321 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# \ud83d\udee1\ufe0f Executive Security Dashboard\nEnterprise security posture summary: secure score, incident SLAs, compliance, and trends. Refresh cadence: real-time (Log Analytics-backed)."
+      },
+      "name": "header"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "7ab7987f-8296-ea9e-d9cc-1a7cfad61888",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "value": {
+              "durationMs": 86400000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 2592000000
+                }
+              ]
+            }
+          },
+          {
+            "id": "388b6c29-4e86-440e-22cb-1c37a455c6d2",
+            "version": "KqlParameterItem/1.0",
+            "name": "Workspace",
+            "type": 5,
+            "isRequired": true,
+            "value": "value::1",
+            "typeSettings": {
+              "resourceTypeFilter": {
+                "microsoft.operationalinsights/workspaces": true
+              },
+              "additionalResourceOptions": []
+            }
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SecureScores\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, CurrentScore, MaxScore) by TenantId\n| extend SecureScorePercentage = round(100.0 * CurrentScore / MaxScore, 1)\n| project SecureScorePercentage",
+              "size": 3,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
+              "tileSettings": {
+                "showBorder": false,
+                "titleContent": {
+                  "columnMatch": "SecureScorePercentage",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "greenRed"
+                  }
+                },
+                "leftContent": {
+                  "columnMatch": "SecureScorePercentage",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "greenRed"
+                  }
+                }
+              }
+            },
+            "name": "Microsoft Secure Score"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SecureScoreControls\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, CurrentScore, MaxScore) by SafeControlId\n| summarize Current = sum(CurrentScore), Max = sum(MaxScore)\n| extend DefenderSecureScorePercentage = round(100.0 * Current / Max, 1)\n| project DefenderSecureScorePercentage",
+              "size": 3,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
+              "tileSettings": {
+                "showBorder": false,
+                "leftContent": {
+                  "columnMatch": "DefenderSecureScorePercentage",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "greenRed"
+                  }
+                }
+              }
+            },
+            "name": "Defender Secure Score"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SecurityIncident\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by IncidentNumber\n| where Status in ('New','Active')\n| summarize OpenIncidents = count()",
+              "size": 3,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
+              "tileSettings": {
+                "showBorder": false,
+                "leftContent": {
+                  "columnMatch": "OpenIncidents",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "blue"
+                  }
+                }
+              }
+            },
+            "name": "Open Incidents"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SecurityIncident\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by IncidentNumber\n| where Status in ('New','Active') and Severity == 'High'\n| summarize CriticalIncidents = count()",
+              "size": 3,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
+              "tileSettings": {
+                "showBorder": false,
+                "leftContent": {
+                  "columnMatch": "CriticalIncidents",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "red"
+                  }
+                }
+              }
+            },
+            "name": "Critical Incidents"
+          }
+        ]
+      },
+      "name": "KPI Summary"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SecurityIncident\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by IncidentNumber\n| extend FirstActivityTime = todatetime(FirstActivityTime)\n| where isnotempty(FirstActivityTime)\n| extend TimeToDetectMinutes = datetime_diff('minute', CreatedTime, FirstActivityTime)\n| summarize MeanTimeToDetectMinutes = round(avg(TimeToDetectMinutes), 1)",
+              "size": 0,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
+              "tileSettings": {
+                "showBorder": false,
+                "leftContent": {
+                  "columnMatch": "MeanTimeToDetectMinutes",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "blue"
+                  }
+                }
+              }
+            },
+            "name": "Mean Time To Detect (minutes)"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SecurityIncident\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by IncidentNumber\n| where Status == 'Closed'\n| extend ClosedTime = todatetime(ClosedTime)\n| extend TimeToRespondMinutes = datetime_diff('minute', ClosedTime, CreatedTime)\n| summarize MeanTimeToRespondMinutes = round(avg(TimeToRespondMinutes), 1)",
+              "size": 0,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
+              "tileSettings": {
+                "showBorder": false,
+                "leftContent": {
+                  "columnMatch": "MeanTimeToRespondMinutes",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "blue"
+                  }
+                }
+              }
+            },
+            "name": "Mean Time To Respond (minutes)"
+          }
+        ]
+      },
+      "name": "SLA Metrics"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SecurityRecommendation\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by RecommendationName, AssessedResourceId\n| summarize Healthy = countif(RecommendationState =~ 'Healthy'), Unhealthy = countif(RecommendationState =~ 'Unhealthy') by RecommendationSeverity\n| project RecommendationSeverity, Healthy, Unhealthy",
+        "size": 0,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "barchart",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "chartSettings": {
+          "xAxis": "RecommendationSeverity",
+          "yAxis": [
+            "Healthy",
+            "Unhealthy"
+          ],
+          "xSettings": {
+            "axisType": 1
+          }
+        }
+      },
+      "name": "Compliance Status by Severity"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SecureScores\n| where TimeGenerated {TimeRange}\n| summarize CurrentScore = arg_max(TimeGenerated, CurrentScore), MaxScore = arg_max(TimeGenerated, MaxScore) by Day = bin(TimeGenerated, 1d)\n| extend SecureScorePercentage = round(100.0 * CurrentScore / MaxScore, 1)\n| project Day, SecureScorePercentage\n| sort by Day asc",
+        "size": 0,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "timechart",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "chartSettings": {
+          "xAxis": "Day",
+          "yAxis": [
+            "SecureScorePercentage"
+          ]
+        }
+      },
+      "name": "Secure Score Trend"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SecurityIncident\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by IncidentNumber\n| summarize NewIncidents = count() by bin(CreatedTime, 1d), Severity\n| sort by CreatedTime asc",
+        "size": 0,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "timechart",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "chartSettings": {
+          "xAxis": "CreatedTime",
+          "yAxis": [
+            "NewIncidents"
+          ],
+          "group": "Severity"
+        }
+      },
+      "name": "Incident Trend by Severity"
+    }
+  ],
+  "isLocked": false,
+  "fallbackResourceIds": [],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

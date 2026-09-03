@@ -1,0 +1,19 @@
+// ============================================================================
+// Query: Risky Users
+// Purpose: Current Entra ID Identity Protection risky-user state, for the
+// Zero Trust and SOC dashboards.
+// Table: AADRiskyUsers (Entra ID Identity Protection data connector)
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+AADRiskyUsers
+| where TimeGenerated {TimeRange}
+| summarize arg_max(TimeGenerated, *) by UserPrincipalName
+| where RiskState in ('atRisk', 'confirmedCompromised')
+| project
+    UserPrincipalName,
+    RiskLevel,
+    RiskState,
+    RiskLastUpdatedDateTime,
+    IsProcessing,
+    UserId
+| sort by RiskLevel desc

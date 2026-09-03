@@ -1,0 +1,33 @@
+// ============================================================================
+// Query: High Severity Incidents
+// Purpose: Surface High and Medium severity incidents with SLA-relevant
+// timing (MTTD/MTTR inputs) for the Executive and SOC dashboards.
+// Table: SecurityIncident
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+SecurityIncident
+| where TimeGenerated {TimeRange}
+| summarize arg_max(TimeGenerated, *) by IncidentNumber
+| where Severity in ('High', 'Medium')
+| extend
+    FirstActivityTime = todatetime(FirstActivityTime),
+    FirstDetectedTime = CreatedTime,
+    ClosedTime = todatetime(ClosedTime)
+| extend
+    TimeToDetectMinutes = iif(isnotempty(FirstActivityTime), datetime_diff('minute', FirstDetectedTime, FirstActivityTime), int(null)),
+    TimeToCloseMinutes = iif(Status == 'Closed', datetime_diff('minute', ClosedTime, FirstDetectedTime), int(null))
+| project
+    IncidentNumber,
+    Title,
+    Severity,
+    Status,
+    Classification,
+    ClassificationReason,
+    Owner = tostring(Owner.assignedTo),
+    CreatedTime,
+    ClosedTime,
+    TimeToDetectMinutes,
+    TimeToCloseMinutes,
+    AlertIds,
+    IncidentUrl
+| sort by Severity asc, CreatedTime desc

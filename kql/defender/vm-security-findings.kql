@@ -1,0 +1,20 @@
+// ============================================================================
+// Query: VM Security Findings
+// Purpose: Unhealthy Defender for Servers recommendations scoped to virtual
+// machines (missing patches, endpoint protection gaps, disk encryption).
+// Table: SecurityRecommendation
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+SecurityRecommendation
+| where TimeGenerated {TimeRange}
+| summarize arg_max(TimeGenerated, *) by RecommendationName, AssessedResourceId
+| where RecommendationState =~ 'Unhealthy'
+| where AssessedResourceType =~ 'VirtualMachine' or AssessedResourceId has '/providers/microsoft.compute/virtualmachines/'
+| project
+    TimeGenerated,
+    VmResourceId = AssessedResourceId,
+    VmName = extract(@'virtualmachines/([^/]+)', 1, AssessedResourceId),
+    RecommendationDisplayName,
+    RecommendationSeverity,
+    RemediationDescription
+| sort by RecommendationSeverity asc

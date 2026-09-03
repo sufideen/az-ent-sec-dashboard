@@ -1,0 +1,16 @@
+// ============================================================================
+// Query: Secure Score Trend Analysis
+// Purpose: Daily Microsoft Secure Score / Defender for Cloud Secure Score
+// trend, for the Executive dashboard trend graph.
+// Table: SecureScores (Defender for Cloud data connector)
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+SecureScores
+| where TimeGenerated {TimeRange}
+| summarize
+    CurrentScore = arg_max(TimeGenerated, CurrentScore),
+    MaxScore = arg_max(TimeGenerated, MaxScore)
+    by Day = bin(TimeGenerated, 1d)
+| extend SecureScorePercentage = round(100.0 * CurrentScore / MaxScore, 1)
+| project Day, CurrentScore, MaxScore, SecureScorePercentage
+| sort by Day asc

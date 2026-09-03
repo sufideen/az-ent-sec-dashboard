@@ -1,0 +1,22 @@
+// ============================================================================
+// Query: Defender Recommendations
+// Purpose: Open Microsoft Defender for Cloud security recommendations by
+// severity and affected resource, for the Executive and SOC dashboards.
+// Table: SecurityRecommendation (Defender for Cloud data connector)
+// Parameters (workbook-bound): {TimeRange}
+// ============================================================================
+SecurityRecommendation
+| where TimeGenerated {TimeRange}
+| summarize arg_max(TimeGenerated, *) by RecommendationName, AssessedResourceId
+| where RecommendationState =~ 'Unhealthy'
+| project
+    TimeGenerated,
+    RecommendationDisplayName,
+    RecommendationName,
+    RecommendationSeverity,
+    AssessedResourceId,
+    ResourceGroup = extract(@'resourcegroups/([^/]+)/', 1, AssessedResourceId),
+    SubscriptionId,
+    RemediationDescription,
+    ControlName
+| sort by RecommendationSeverity asc, TimeGenerated desc

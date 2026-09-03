@@ -1,0 +1,25 @@
+# Bicep build output
+*.json.bak
+bin/
+obj/
+
+# Compiled ARM templates (generated from .bicep; keep source only)
+bicep/*.parameters.json
+!bicep/main.*.bicepparam
+
+# Local secrets / az CLI
+.env
+*.env.local
+.azure/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Test output
+tests/**/TestResults/
+reports/
+*.trx
