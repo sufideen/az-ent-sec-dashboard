@@ -69,7 +69,13 @@ Repeat for `test` and `prod`, changing the parameter file and resource group.
 
 ## Branch protection strategy
 
-- `main` is protected: require a pull request, require `Bicep Lint` and `Security Scan` status checks to pass, require at least 1 approving review, dismiss stale approvals on new commits, disallow force-push and branch deletion.
+- `main` is protected: require a pull request, require at least 1 approving review, dismiss stale approvals on new commits, disallow force-push and branch deletion.
+- Required status checks — GitHub evaluates required checks at the **job** level, not the workflow name, so select each of these individually under Settings > Branches > Branch protection rules > `main` (they only appear in the picker after each workflow has run at least once on the repo):
+  - From `bicep-lint.yml`: `lint`
+  - From `security-scan.yml`: `microsoft-security-devops`, `checkov`, `gitleaks`, `psrule`
+  - From `what-if.yml`: `what-if` (all three matrix legs: dev, test, prod)
+- Each of the four `security-scan.yml` jobs fails closed on findings by default: Checkov runs with `soft_fail: false`, Microsoft Security DevOps and the `microsoft/ps-rule` action both fail their step on any error/fail-level result, and Gitleaks fails on any detected secret. Selecting them as required checks (above) is what turns that into an actual merge gate — without that branch-protection step, the jobs still run and report to code scanning, but a red job would not block the merge button.
+- The Azure DevOps pipeline enforces the equivalent gate structurally rather than via a picker: `SecurityScan` (Microsoft Security DevOps + Checkov + PSRule, all failing closed) is a hard `dependsOn` of `WhatIf`, which is a hard `dependsOn` of every `Deploy*` stage — a failure anywhere in `SecurityScan` blocks the rest of the pipeline automatically.
 - No direct pushes to `main` — all changes (including parameter file updates) go through PR + What-If review.
 - Tag releases (`v1.0.0`, etc.) on `main` after a successful Prod deployment for traceability/rollback reference.
 

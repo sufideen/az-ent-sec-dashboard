@@ -90,6 +90,29 @@ stages:
             inputs:
               categories: 'IaC,secrets'
 
+          - task: UsePythonVersion@0
+            displayName: 'Use Python 3.x'
+            inputs:
+              versionSpec: '3.x'
+
+          - script: |
+              set -euo pipefail
+              pip install checkov
+              mkdir -p reports
+              # checkov exits non-zero on any FAILED check, which fails this
+              # step and blocks the stage (and therefore WhatIf/DeployDev/../DeployProd).
+              checkov --directory . --framework bicep \
+                --output cli --output junitxml --output-file-path console,reports/checkov-results.xml
+            displayName: 'Checkov (Bicep IaC policy scan)'
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Checkov results'
+            condition: always()
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: 'reports/checkov-results.xml'
+              failTaskOnFailedTests: true
+
           - task: PowerShell@2
             displayName: 'PSRule for Azure'
             inputs:
