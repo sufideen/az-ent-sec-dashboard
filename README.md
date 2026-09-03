@@ -82,13 +82,13 @@ az bicep build --file bicep/main.bicep
 
 # 2. Preview changes (What-If)
 az deployment group what-if \
-  --resource-group rg-contoso-secops-dev-eus-001 \
+  --resource-group rg-itsolutions-secops-dev-eus-001 \
   --template-file bicep/main.bicep \
   --parameters bicep/params/dev.bicepparam
 
 # 3. Deploy
 az deployment group create \
-  --resource-group rg-contoso-secops-dev-eus-001 \
+  --resource-group rg-itsolutions-secops-dev-eus-001 \
   --template-file bicep/main.bicep \
   --parameters bicep/params/dev.bicepparam \
   --parameters teamsWebhookUrl="$TEAMS_WEBHOOK_URL_DEV"
@@ -110,7 +110,7 @@ See [docs/deployment-guide.md](docs/deployment-guide.md) for the full walkthroug
 
 ## Design principles
 
-- **CAF naming**: `<resource-type>-<workload>-<environment>-<region>-<instance>`, e.g. `logic-contoso-secops-prod-eus-001`.
+- **CAF naming**: `<resource-type>-<workload>-<environment>-<region>-<instance>`, e.g. `logic-itsolutions-secops-prod-eus-001`.
 - **Zero Trust / least privilege**: RBAC is scoped directly to the Log Analytics Workspace, not the subscription; the alerting Logic App holds zero secrets and reads Key Vault at runtime via a user-assigned managed identity.
 - **No secrets in source control**: the Teams webhook URL is a `@secure()` Bicep parameter supplied by a pipeline secret variable and stored only in Key Vault.
 - **No placeholders**: every module and the orchestrator have been compiled with the Bicep CLI (`az bicep build`) as part of authoring this repository; parameter files build cleanly for all three environments.

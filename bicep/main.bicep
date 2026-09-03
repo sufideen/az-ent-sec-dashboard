@@ -41,8 +41,8 @@ param environmentName string
 param location string = resourceGroup().location
 
 @minLength(2)
-@maxLength(10)
-@description('Short organization prefix used in CAF resource names, e.g. \'contoso\'.')
+@maxLength(20)
+@description('Short organization prefix used in CAF resource names, e.g. \'itsolutions\'.')
 param orgPrefix string
 
 @description('Workload name used in CAF resource names.')
@@ -76,7 +76,7 @@ param existingLogAnalyticsWorkspaceResourceGroup string = resourceGroup().name
 // Alerting / notifications
 // -----------------------------------------------------------------------
 
-@description('Email addresses notified by the Action Group, e.g. [{ name: \'soc-team\', emailAddress: \'soc@contoso.com\' }]')
+@description('Email addresses notified by the Action Group, e.g. [{ name: \'soc-team\', emailAddress: \'soc@itsolutions.com\' }]')
 param actionGroupEmailReceivers array = []
 
 @description('Teams incoming-webhook URL. Pass via a pipeline secret variable (never commit to source). Stored in Key Vault, not in the template.')

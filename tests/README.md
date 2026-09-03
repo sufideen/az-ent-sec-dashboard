@@ -18,7 +18,7 @@ Invoke-Pester -Path tests/pester/Bicep.Lint.Tests.ps1, tests/pester/Workbook.Sch
 Run the full suite including the live integration test:
 
 ```powershell
-$env:SECOPS_RG_DEV = 'rg-contoso-secops-dev-eus-001'
+$env:SECOPS_RG_DEV = 'rg-itsolutions-secops-dev-eus-001'
 az login
 Invoke-Pester -Path tests/pester/ -Output Detailed
 ```

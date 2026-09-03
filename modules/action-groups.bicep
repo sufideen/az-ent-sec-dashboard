@@ -15,7 +15,7 @@ param actionGroupShortName string
 @description('Whether the action group is enabled.')
 param enabled bool = true
 
-@description('Email addresses to notify, e.g. [{ name: \'soc-team\', emailAddress: \'soc@contoso.com\' }]')
+@description('Email addresses to notify, e.g. [{ name: \'soc-team\', emailAddress: \'soc@itsolutions.com\' }]')
 param emailReceivers array = []
 
 @description('Resource ID of the Logic App to invoke for Teams notifications (optional).')

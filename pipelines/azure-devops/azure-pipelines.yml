@@ -160,15 +160,15 @@ stages:
             dev:
               envName: dev
               serviceConnection: arm-secops-dev
-              resourceGroup: rg-contoso-secops-dev-eus-001
+              resourceGroup: rg-itsolutions-secops-dev-eus-001
             test:
               envName: test
               serviceConnection: arm-secops-test
-              resourceGroup: rg-contoso-secops-test-eus-001
+              resourceGroup: rg-itsolutions-secops-test-eus-001
             prod:
               envName: prod
               serviceConnection: arm-secops-prod
-              resourceGroup: rg-contoso-secops-prod-eus-001
+              resourceGroup: rg-itsolutions-secops-prod-eus-001
         steps:
           - task: AzureCLI@2
             displayName: 'az deployment group what-if ($(envName))'
@@ -207,7 +207,7 @@ stages:
                     scriptLocation: inlineScript
                     inlineScript: |
                       az deployment group create \
-                        --resource-group rg-contoso-secops-dev-eus-001 \
+                        --resource-group rg-itsolutions-secops-dev-eus-001 \
                         --template-file $(bicepEntryPoint) \
                         --parameters bicep/params/dev.bicepparam \
                         --parameters teamsWebhookUrl="$(TeamsWebhookUrlDev)"
@@ -236,7 +236,7 @@ stages:
                     scriptLocation: inlineScript
                     inlineScript: |
                       az deployment group create \
-                        --resource-group rg-contoso-secops-test-eus-001 \
+                        --resource-group rg-itsolutions-secops-test-eus-001 \
                         --template-file $(bicepEntryPoint) \
                         --parameters bicep/params/test.bicepparam \
                         --parameters teamsWebhookUrl="$(TeamsWebhookUrlTest)"
@@ -265,7 +265,7 @@ stages:
                     scriptLocation: inlineScript
                     inlineScript: |
                       az deployment group create \
-                        --resource-group rg-contoso-secops-prod-eus-001 \
+                        --resource-group rg-itsolutions-secops-prod-eus-001 \
                         --template-file $(bicepEntryPoint) \
                         --parameters bicep/params/prod.bicepparam \
                         --parameters teamsWebhookUrl="$(TeamsWebhookUrlProd)"

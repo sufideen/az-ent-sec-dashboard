@@ -2,18 +2,18 @@ using '../main.bicep'
 
 param environmentName = 'dev'
 param location = 'eastus'
-param orgPrefix = 'contoso'
+param orgPrefix = 'itsolutions'
 param workloadName = 'secops'
 param instance = '001'
 param regionCode = 'eus'
 
-param existingLogAnalyticsWorkspaceName = 'log-contoso-security-eus-001'
-param existingLogAnalyticsWorkspaceResourceGroup = 'rg-contoso-security-eus-001'
+param existingLogAnalyticsWorkspaceName = 'log-itsolutions-security-eus-001'
+param existingLogAnalyticsWorkspaceResourceGroup = 'rg-itsolutions-security-eus-001'
 
 param actionGroupEmailReceivers = [
   {
     name: 'soc-team'
-    emailAddress: 'soc-dev@contoso.com'
+    emailAddress: 'soc-dev@itsolutions.com'
   }
 ]
 

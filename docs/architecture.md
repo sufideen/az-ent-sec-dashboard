@@ -102,11 +102,11 @@ Because of this, `modules/diagnostic-settings.bicep` in this repo is intentional
 
 | Resource | Abbreviation | Example |
 |---|---|---|
-| Key Vault | `kv` | `kvcontososecopsprod...` (alnum only, 24 char max) |
-| Managed Identity | `id` | `id-contoso-secops-prod-eus-001-logicapp` |
-| Logic App | `logic` | `logic-contoso-secops-prod-eus-001-alerting` |
-| Action Group | `ag` | `ag-contoso-secops-prod-eus-001` |
-| Workbook | `wb` | `wb-contoso-secops-prod-eus-001-executive` |
+| Key Vault | `kv` | `kvsecopsprod<13-char-hash>` (alnum only, 24 char max — deliberately does NOT include `orgPrefix`, since Key Vault's 24-char limit leaves no room for it once workload + environment + a collision-safe `uniqueString()` suffix are included; see `modules/key-vault.bicep`) |
+| Managed Identity | `id` | `id-itsolutions-secops-prod-eus-001-logicapp` |
+| Logic App | `logic` | `logic-itsolutions-secops-prod-eus-001-alerting` |
+| Action Group | `ag` | `ag-itsolutions-secops-prod-eus-001` |
+| Workbook | `wb` | `wb-itsolutions-secops-prod-eus-001-executive` |
 
 ## 7. Well-Architected Framework alignment
 

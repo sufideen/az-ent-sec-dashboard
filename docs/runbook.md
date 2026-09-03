@@ -26,7 +26,7 @@ Day-2 operational procedures for this platform. For active-incident procedures, 
 ```bash
 az monitor action-group test-notifications create \
   --resource-group <rg> \
-  --action-group-name ag-contoso-secops-<env>-eus-001 \
+  --action-group-name ag-itsolutions-secops-<env>-eus-001 \
   --notification-type logicapp \
   --receivers teamsAlerting
 ```

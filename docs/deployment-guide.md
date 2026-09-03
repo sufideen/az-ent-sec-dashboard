@@ -16,7 +16,7 @@ Edit `bicep/params/<env>.bicepparam`:
 |---|---|---|
 | `existingLogAnalyticsWorkspaceName` | Yes | Must already exist with Sentinel enabled |
 | `existingLogAnalyticsWorkspaceResourceGroup` | Yes | Defaults to the deployment RG |
-| `orgPrefix` | Yes | 2-10 chars, e.g. `contoso` |
+| `orgPrefix` | Yes | 2-10 chars, e.g. `itsolutions` |
 | `actionGroupEmailReceivers` | Yes | At least the SOC distribution list |
 | `socAnalystsGroupObjectId` / `securityAdminsGroupObjectId` / `executivesGroupObjectId` / `auditorsGroupObjectId` | Recommended | Leave blank to skip that persona's RBAC (module handles empty gracefully) |
 | `teamsWebhookUrl` | No (secure) | **Never** hard-code — pass via `--parameters teamsWebhookUrl=$(SECRET)` from a pipeline secret / Key Vault-backed variable group |
@@ -33,14 +33,14 @@ az bicep build --file bicep/main.bicep
 
 # What-If (always run before create)
 az deployment group what-if \
-  --resource-group rg-contoso-secops-dev-eus-001 \
+  --resource-group rg-itsolutions-secops-dev-eus-001 \
   --template-file bicep/main.bicep \
   --parameters bicep/params/dev.bicepparam
 
 # Deploy
 az deployment group create \
   --name secops-platform-dev-$(date +%Y%m%d%H%M) \
-  --resource-group rg-contoso-secops-dev-eus-001 \
+  --resource-group rg-itsolutions-secops-dev-eus-001 \
   --template-file bicep/main.bicep \
   --parameters bicep/params/dev.bicepparam \
   --parameters teamsWebhookUrl="$TEAMS_WEBHOOK_URL_DEV"
