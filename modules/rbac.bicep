@@ -12,7 +12,7 @@
 // auditors, and the platform's own managed identities.
 // ============================================================================
 
-@description('Name of the existing Log Analytics Workspace (Sentinel-enabled) to scope role assignments to.')
+@description('Name of the existing Log Analytics Workspace (Sentinel-enabled) to scope role assignments to. This module must be invoked with `scope: resourceGroup(<workspace-resource-group>)` by its caller when the workspace lives in a different resource group than the parent deployment - see bicep/main.bicep.')
 param logAnalyticsWorkspaceName string
 
 @description('Array of role assignments to create: [{ principalId, principalType: \'User\'|\'Group\'|\'ServicePrincipal\', roleDefinitionId, assignmentNameSeed }]')

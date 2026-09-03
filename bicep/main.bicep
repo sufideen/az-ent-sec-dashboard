@@ -385,6 +385,11 @@ AuditLogs
 
 module sentinelRules '../modules/sentinel-rules.bicep' = if (enableAnalyticsRules) {
   name: 'deploy-sentinel-analytics-rules'
+  // Scopes the entire module - including its internal `existing` LAW
+  // reference and the alertRules deployed as extensions on it - to the
+  // workspace's own resource group, which may differ from this deployment's
+  // resource group (see existingLogAnalyticsWorkspaceResourceGroup).
+  scope: resourceGroup(existingLogAnalyticsWorkspaceResourceGroup)
   params: {
     logAnalyticsWorkspaceName: existingLogAnalyticsWorkspaceName
     analyticsRules: [
@@ -498,6 +503,9 @@ module sentinelRules '../modules/sentinel-rules.bicep' = if (enableAnalyticsRule
 // =========================================================================
 module rbac '../modules/rbac.bicep' = {
   name: 'deploy-rbac'
+  // Same reasoning as the sentinelRules module above: scope the whole
+  // module to the workspace's own resource group, not this deployment's.
+  scope: resourceGroup(existingLogAnalyticsWorkspaceResourceGroup)
   params: {
     logAnalyticsWorkspaceName: existingLogAnalyticsWorkspaceName
     roleAssignments: concat(

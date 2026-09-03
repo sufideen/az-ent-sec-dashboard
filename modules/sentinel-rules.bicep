@@ -7,7 +7,7 @@
 // dashboards and the detections that feed Sentinel incidents).
 // ============================================================================
 
-@description('Name of the existing Log Analytics Workspace with Microsoft Sentinel enabled.')
+@description('Name of the existing Log Analytics Workspace with Microsoft Sentinel enabled. This module must be invoked with `scope: resourceGroup(<workspace-resource-group>)` by its caller when the workspace lives in a different resource group than the parent deployment - see bicep/main.bicep.')
 param logAnalyticsWorkspaceName string
 
 @description('''
