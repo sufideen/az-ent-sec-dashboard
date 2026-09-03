@@ -56,14 +56,24 @@ resource scheduledRules 'Microsoft.SecurityInsights/alertRules@2023-11-01' = [
       suppressionDuration: rule.suppressionDuration
       incidentConfiguration: {
         createIncident: true
+        // Grouping disabled: each alert becomes its own incident. Azure
+        // rejects matchingMethod: 'Selected' unless at least one
+        // groupByEntities/groupByAlertDetails/groupByCustomDetails entry is
+        // provided (verified against a live deployment) - since every rule
+        // here already collapses to one alert per query result via
+        // eventGroupingSettings.aggregationKind: 'SingleAlert', there is
+        // nothing meaningful to group across, so disabling is correct
+        // rather than inventing a groupBy field just to satisfy validation.
         groupingConfiguration: {
-          enabled: true
+          enabled: false
           reopenClosedIncident: false
+          // Unused while enabled: false, but Bicep's type schema for
+          // GroupingConfiguration marks these required regardless (flagged
+          // by the compiler itself as a possible schema inaccuracy, BCP035)
+          // - supplied to satisfy that rather than gamble on whether the
+          // live API agrees. 'AnyAlert' needs no groupBy* fields.
           lookbackDuration: 'PT5H'
-          matchingMethod: 'Selected'
-          groupByEntities: []
-          groupByAlertDetails: []
-          groupByCustomDetails: []
+          matchingMethod: 'AnyAlert'
         }
       }
       eventGroupingSettings: {

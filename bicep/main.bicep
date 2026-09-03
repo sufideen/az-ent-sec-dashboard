@@ -486,7 +486,7 @@ module sentinelRules '../modules/sentinel-rules.bicep' = if (enableAnalyticsRule
         triggerThreshold: 0
         tactics: [
           'PrivilegeEscalation'
-          'PersistenceMechanism'
+          'Persistence'
         ]
         techniques: [
           'T1098'
