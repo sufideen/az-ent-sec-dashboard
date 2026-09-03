@@ -8,7 +8,7 @@
 - Ingestion estimate: ~10-15 MB/user/day of combined SigninLogs, AuditLogs, and Defender-forwarded security events (typical for a standard M365 + Azure estate; heavier if verbose diagnostic logging or many custom data connectors are enabled).
 - Defender for Cloud costs assume the **Defender for Servers Plan 2** and **Defender CSPM** plans; Defender for Storage/Key Vault/Containers priced per-resource where applicable.
 - Sentinel pricing: pay-as-you-go analyzed-GB rate (~$2.46/GB, East US, PAYG tier); commitment tiers (100GB/day+) reduce effective rate materially at Large scale — noted below.
-- Log Analytics: first 90 days retention included with Sentinel; long-term retention (this platform defaults to 365 days in prod) billed per GB/month beyond that.
+- Log Analytics: first 90 days retention included with Sentinel; long-term retention beyond that is billed per GB/month. Retention is a Log Analytics Workspace-level setting, configured on the workspace itself (outside this repo's scope, since it references the workspace as `existing`) — the 365-day figure below models a typical production retention policy, not something this platform's own Bicep sets.
 
 ## Small — 100 users
 

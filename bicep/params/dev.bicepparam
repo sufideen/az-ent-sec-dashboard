@@ -24,7 +24,6 @@ param teamsWebhookUrl = ''
 param enableTeamsAlerting = false
 
 param keyVaultPublicNetworkAccessEnabled = true
-param diagnosticRetentionInDays = 30
 param enableAnalyticsRules = true
 
 // Entra ID group object IDs - replace with real group IDs for the dev tenant.

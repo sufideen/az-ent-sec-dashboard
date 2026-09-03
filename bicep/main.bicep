@@ -93,9 +93,6 @@ param enableTeamsAlerting bool = true
 @description('Allow public network access to the platform Key Vault. Must be false in test/prod; use a Private Endpoint instead.')
 param keyVaultPublicNetworkAccessEnabled bool = (environmentName == 'dev')
 
-@description('Log/metric retention (days) for platform resource diagnostic settings. 0 = workspace default retention.')
-param diagnosticRetentionInDays int = (environmentName == 'prod') ? 365 : 90
-
 // -----------------------------------------------------------------------
 // RBAC assignments (Zero Trust least privilege)
 // -----------------------------------------------------------------------
@@ -243,7 +240,6 @@ module diagKeyVault '../modules/diagnostic-settings.bicep' = {
     targetResourceName: keyVault.outputs.keyVaultName
     logAnalyticsWorkspaceId: existingLogAnalyticsWorkspace.id
     diagnosticSettingName: 'diag-to-law'
-    retentionInDays: diagnosticRetentionInDays
   }
 }
 
@@ -254,7 +250,6 @@ module diagLogicApp '../modules/diagnostic-settings.bicep' = if (enableTeamsAler
     targetResourceName: logicAppName
     logAnalyticsWorkspaceId: existingLogAnalyticsWorkspace.id
     diagnosticSettingName: 'diag-to-law'
-    retentionInDays: diagnosticRetentionInDays
   }
   dependsOn: [
     logicAppAlerting

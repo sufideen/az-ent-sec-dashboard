@@ -33,9 +33,6 @@ param logAnalyticsWorkspaceId string
 @description('Name of the diagnostic setting.')
 param diagnosticSettingName string = 'diag-to-law'
 
-@description('Log retention in days (0 = use workspace retention / no explicit override).')
-param retentionInDays int = 0
-
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = if (targetResourceType == 'KeyVault') {
   name: targetResourceName
 }
@@ -44,6 +41,15 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' existing = if (targetRe
   name: targetResourceName
 }
 
+// NOTE ON RETENTION: Azure deprecated the retentionPolicy property on
+// diagnostic settings - a NEW diagnostic setting is rejected outright with
+// "Diagnostic settings does not support retention for new diagnostic
+// settings" if retentionPolicy.enabled is set (verified against a live
+// deployment). Log retention is configured at the Log Analytics Workspace
+// level now (or per-table, via Basic Logs/Auxiliary Logs tiers - see
+// docs/cost-estimates.md) - out of this module's and this repo's control
+// either way, since the workspace is an `existing` resource this platform
+// references but doesn't own.
 resource diagKeyVault 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (targetResourceType == 'KeyVault') {
   name: diagnosticSettingName
   scope: keyVault
@@ -53,28 +59,16 @@ resource diagKeyVault 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview'
       {
         categoryGroup: 'audit'
         enabled: true
-        retentionPolicy: {
-          enabled: retentionInDays > 0
-          days: retentionInDays
-        }
       }
       {
         categoryGroup: 'allLogs'
         enabled: true
-        retentionPolicy: {
-          enabled: retentionInDays > 0
-          days: retentionInDays
-        }
       }
     ]
     metrics: [
       {
         category: 'AllMetrics'
         enabled: true
-        retentionPolicy: {
-          enabled: retentionInDays > 0
-          days: retentionInDays
-        }
       }
     ]
   }
@@ -89,20 +83,12 @@ resource diagLogicApp 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview'
       {
         categoryGroup: 'allLogs'
         enabled: true
-        retentionPolicy: {
-          enabled: retentionInDays > 0
-          days: retentionInDays
-        }
       }
     ]
     metrics: [
       {
         category: 'AllMetrics'
         enabled: true
-        retentionPolicy: {
-          enabled: retentionInDays > 0
-          days: retentionInDays
-        }
       }
     ]
   }
