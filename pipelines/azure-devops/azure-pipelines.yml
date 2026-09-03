@@ -67,7 +67,7 @@ stages:
                 az bicep build --file "$f" --stdout > /dev/null
               done
               for env in dev test prod; do
-                az bicep build-params --file "bicep/main.$env.bicepparam" --outfile "/tmp/main.$env.parameters.json"
+                az bicep build-params --file "bicep/params/$env.bicepparam" --outfile "/tmp/main.$env.parameters.json"
               done
               for f in workbooks/*.json; do
                 python3 -m json.tool "$f" > /dev/null
@@ -101,7 +101,10 @@ stages:
               mkdir -p reports
               # checkov exits non-zero on any FAILED check, which fails this
               # step and blocks the stage (and therefore WhatIf/DeployDev/../DeployProd).
-              checkov --directory . --framework bicep \
+              # --config-file centralizes scan directories and the one documented
+              # skip-check (see .checkov.yaml) instead of scattering flags here -
+              # convention matches sufideen/securebicep's .checkov.yaml.
+              checkov --config-file .checkov.yaml \
                 --output cli --output junitxml --output-file-path console,reports/checkov-results.xml
             displayName: 'Checkov (Bicep IaC policy scan)'
 
@@ -117,9 +120,22 @@ stages:
             displayName: 'PSRule for Azure'
             inputs:
               targetType: inline
+              pwsh: true
+              # Assert-PSRule (not Invoke-PSRule) is the cmdlet meant for CI
+              # gating: it exits non-zero on any Fail-level result, which
+              # fails this task and blocks the stage. Invoke-PSRule only
+              # returns results, it doesn't gate on them. -Option picks up
+              # the repo-root ps-rule.yaml. Convention matches
+              # sufideen/securebicep's azure-pipelines.yml.
               script: |
+                Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
                 Install-Module -Name PSRule.Rules.Azure -Scope CurrentUser -Force
-                Invoke-PSRule -InputPath 'bicep/' -Module PSRule.Rules.Azure -Format File -OutputFormat NUnit3 -OutputPath 'reports/psrule-results.xml'
+                Assert-PSRule `
+                  -InputPath 'bicep' `
+                  -Module PSRule.Rules.Azure `
+                  -Option 'ps-rule.yaml' `
+                  -OutputFormat NUnit3 `
+                  -OutputPath 'reports/psrule-results.xml'
 
           - task: PublishTestResults@2
             displayName: 'Publish PSRule results'
@@ -164,7 +180,7 @@ stages:
                 az deployment group what-if \
                   --resource-group "$(resourceGroup)" \
                   --template-file "$(bicepEntryPoint)" \
-                  --parameters "bicep/main.$(envName).bicepparam" \
+                  --parameters "bicep/params/$(envName).bicepparam" \
                   --result-format FullResourcePayloads
 
   # --------------------------------------------------------------------
@@ -193,7 +209,7 @@ stages:
                       az deployment group create \
                         --resource-group rg-contoso-secops-dev-eus-001 \
                         --template-file $(bicepEntryPoint) \
-                        --parameters bicep/main.dev.bicepparam \
+                        --parameters bicep/params/dev.bicepparam \
                         --parameters teamsWebhookUrl="$(TeamsWebhookUrlDev)"
 
   # --------------------------------------------------------------------
@@ -222,7 +238,7 @@ stages:
                       az deployment group create \
                         --resource-group rg-contoso-secops-test-eus-001 \
                         --template-file $(bicepEntryPoint) \
-                        --parameters bicep/main.test.bicepparam \
+                        --parameters bicep/params/test.bicepparam \
                         --parameters teamsWebhookUrl="$(TeamsWebhookUrlTest)"
 
   # --------------------------------------------------------------------
@@ -251,5 +267,5 @@ stages:
                       az deployment group create \
                         --resource-group rg-contoso-secops-prod-eus-001 \
                         --template-file $(bicepEntryPoint) \
-                        --parameters bicep/main.prod.bicepparam \
+                        --parameters bicep/params/prod.bicepparam \
                         --parameters teamsWebhookUrl="$(TeamsWebhookUrlProd)"

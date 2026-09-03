@@ -1,6 +1,24 @@
 # Azure Security Operations Platform
 
+[![Bicep Lint](https://github.com/sufideen/az-ent-sec-dashboard/actions/workflows/bicep-lint.yml/badge.svg)](https://github.com/sufideen/az-ent-sec-dashboard/actions/workflows/bicep-lint.yml)
+[![Security Scan](https://github.com/sufideen/az-ent-sec-dashboard/actions/workflows/security-scan.yml/badge.svg)](https://github.com/sufideen/az-ent-sec-dashboard/actions/workflows/security-scan.yml)
+[![IaC: Bicep](https://img.shields.io/badge/IaC-Bicep-0078d4)](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview)
+[![Auth: OIDC](https://img.shields.io/badge/Auth-OIDC%20Passwordless-107c10)](https://learn.microsoft.com/en-us/azure/active-directory/workload-identities/workload-identity-federation)
+[![Secrets: Zero in source](https://img.shields.io/badge/Secrets-Zero%20in%20source-critical)](docs/architecture.md)
+
 Enterprise Security Operations Dashboard for Azure, deployed entirely via Bicep. This platform sits **on top of** an already-deployed security foundation — Microsoft Sentinel, a centralized Log Analytics Workspace, Entra ID integrated with Sentinel, Zero Trust architecture, Azure Policy, and Defender for Cloud — and adds the executive, SOC, and Zero Trust reporting layer plus a curated detection and alerting pack.
+
+## Part of a layered Azure security platform
+
+This is layer 3 of a 3-repo stack, not a standalone project — each repo owns a distinct scope, and none duplicate each other's Sentinel content (see [architecture.md #8](docs/architecture.md#8-relationship-to-sibling-repositories) for the full rule-by-rule boundary):
+
+| Layer | Repo | Scope | Owns |
+|---|---|---|---|
+| 1. Foundation | [`azl-bicepdeploy`](https://github.com/sufideen/azl-bicepdeploy) | tenant / mgmt-group / subscription | Management groups, Azure Policy, the Log Analytics Workspace itself |
+| 2. Identity / Zero Trust plane | [`ztr-entra-lz`](https://github.com/sufideen/ztr-entra-lz) | subscription | Conditional Access, PIM, custom RBAC roles, identity-plane Sentinel rules, ISO 27001 compliance-evidence workbook |
+| 3. **This repo** | `az-ent-sec-dashboard` | resource group | Executive/SOC/Zero Trust operational dashboards, complementary detection rules, Teams/email alerting |
+
+CI/CD gating conventions (Checkov + PSRule as hard merge gates, root-level `.checkov.yaml`/`ps-rule.yaml`, OIDC-only deploy credentials) are shared with [`securebicep`](https://github.com/sufideen/securebicep), the account's dedicated DevSecOps-pipeline reference.
 
 ## What this repository deploys
 
@@ -9,24 +27,27 @@ Enterprise Security Operations Dashboard for Azure, deployed entirely via Bicep.
 | Executive Security Dashboard | Azure Workbook: Secure Score, incidents, MTTD/MTTR, compliance, trends |
 | SOC Dashboard | Azure Workbook: active incidents, alert severity, MITRE ATT&CK, TI matches |
 | Zero Trust Dashboard | Azure Workbook: MFA adoption, CA success rate, risky users, PIM, device compliance, guests |
-| Detections | 5 Microsoft Sentinel Scheduled Analytics Rules (brute force, impossible travel, sign-in spikes, CA failure spikes, privileged role changes) |
+| Detections | 5 Microsoft Sentinel Scheduled Analytics Rules (brute force, high-risk OAuth consent, sign-in/CA failure spikes, privileged role changes) — chosen to complement, not duplicate, `ztr-entra-lz`'s identity-plane rules |
 | Alerting | Azure Monitor Action Group -> Logic App -> Microsoft Teams (secretless: Key Vault + Managed Identity) + email |
 | Access control | Least-privilege RBAC scoped to the Log Analytics Workspace for SOC/Security Admin/Executive/Auditor Entra ID groups |
 | Observability | Diagnostic settings for all platform-owned resources -> the existing Log Analytics Workspace |
 
 ## What this repository does **not** deploy
 
-Sentinel itself, the Log Analytics Workspace, Defender for Cloud, Entra ID Conditional Access policies, or Azure Policy assignments — these are assumed to already exist per the environment this platform targets. `bicep/main.bicep` references the workspace as an `existing` resource.
+Sentinel itself, the Log Analytics Workspace, Defender for Cloud, Entra ID Conditional Access policies, or Azure Policy assignments — these are assumed to already exist per the environment this platform targets, deployed by `azl-bicepdeploy` and `ztr-entra-lz` above. `bicep/main.bicep` references the workspace as an `existing` resource.
 
 ## Repository structure
 
 ```
 azure-security-operations-platform/
-├── bicep/                    # Orchestrator template + per-environment parameter files
-│   ├── main.bicep
-│   ├── main.dev.bicepparam
-│   ├── main.test.bicepparam
-│   └── main.prod.bicepparam
+├── .checkov.yaml               # Checkov config (root, matches sufideen/securebicep convention)
+├── ps-rule.yaml                 # PSRule for Azure config (root, auto-discovered)
+├── bicep/
+│   ├── main.bicep                # Orchestrator template
+│   └── params/                   # Per-environment parameter files
+│       ├── dev.bicepparam
+│       ├── test.bicepparam
+│       └── prod.bicepparam
 ├── modules/                  # Reusable Bicep modules (CAF-compliant naming)
 │   ├── workbook.bicep
 │   ├── sentinel-rules.bicep
@@ -50,7 +71,7 @@ azure-security-operations-platform/
 │   ├── github/                # GitHub Actions workflows (mirrored into .github/workflows/)
 │   └── azure-devops/          # Azure DevOps YAML pipeline
 ├── docs/                       # Architecture, deployment, runbooks, cost, roadmap
-└── tests/                      # Pester + PSRule for Azure validation
+└── tests/                      # Pester tests (PSRule/Checkov configs live at repo root)
 ```
 
 ## Quick start
@@ -63,13 +84,13 @@ az bicep build --file bicep/main.bicep
 az deployment group what-if \
   --resource-group rg-contoso-secops-dev-eus-001 \
   --template-file bicep/main.bicep \
-  --parameters bicep/main.dev.bicepparam
+  --parameters bicep/params/dev.bicepparam
 
 # 3. Deploy
 az deployment group create \
   --resource-group rg-contoso-secops-dev-eus-001 \
   --template-file bicep/main.bicep \
-  --parameters bicep/main.dev.bicepparam \
+  --parameters bicep/params/dev.bicepparam \
   --parameters teamsWebhookUrl="$TEAMS_WEBHOOK_URL_DEV"
 ```
 

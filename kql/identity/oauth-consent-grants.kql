@@ -1,0 +1,37 @@
+// ============================================================================
+// Query: High-Risk OAuth Consent Grants
+// Purpose: Flag consent grants to app registrations requesting high-privilege
+// Microsoft Graph scopes (mail, files, directory) - a common persistence/
+// credential-access technique (MITRE T1098.001) that bypasses normal sign-in
+// controls entirely, since a consented app keeps working without MFA or a
+// live user session.
+// Table: AuditLogs
+// Parameters (workbook-bound): {TimeRange}
+// Used by: modules/sentinel-rules.bicep (Scheduled Analytics Rule)
+//
+// NOTE: TargetResources[].modifiedProperties[] index positions for a
+// 'Consent to application' event can shift slightly across tenants depending
+// on which consent flow (admin vs. user, static vs. incremental) fired it -
+// validate the ConsentType/Scopes indices below against a real event in your
+// tenant (Log Analytics > AuditLogs, OperationName == 'Consent to
+// application') before enabling this as a blocking gate, and adjust if the
+// property order differs.
+// ============================================================================
+let HighRiskScopes = dynamic([
+    'Mail.Read', 'Mail.ReadWrite', 'Mail.Send',
+    'Files.ReadWrite.All', 'Sites.ReadWrite.All',
+    'Directory.ReadWrite.All', 'RoleManagement.ReadWrite.Directory',
+    'MailboxSettings.ReadWrite', 'User.ReadWrite.All'
+]);
+AuditLogs
+| where TimeGenerated {TimeRange}
+| where OperationName == 'Consent to application'
+| extend AppDisplayName = tostring(TargetResources[0].displayName)
+| extend GrantedBy = tostring(InitiatedBy.user.userPrincipalName)
+| extend ModifiedProps = TargetResources[0].modifiedProperties
+| mv-expand ModifiedProps
+| where tostring(ModifiedProps.displayName) in ('ConsentAction.Permissions', 'Scope', 'DelegatedPermissionGrant.Scope')
+| extend Scopes = tostring(ModifiedProps.newValue)
+| where Scopes has_any (HighRiskScopes)
+| project TimeGenerated, AppDisplayName, GrantedBy, Scopes, CorrelationId
+| sort by TimeGenerated desc

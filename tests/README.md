@@ -23,13 +23,24 @@ az login
 Invoke-Pester -Path tests/pester/ -Output Detailed
 ```
 
-## PSRule for Azure (`tests/psrule/`)
+## PSRule for Azure (`/ps-rule.yaml`, repo root)
 
-`ps-rule.yaml` configures the [PSRule.Rules.Azure](https://azure.github.io/PSRule.Rules.Azure/) `Azure.Default` baseline against the compiled Bicep output, catching Well-Architected Framework deviations (missing diagnostic settings, public network exposure, missing tags, etc.) that a plain `bicep build` cannot detect.
+The repo-root [`ps-rule.yaml`](../ps-rule.yaml) configures the [PSRule.Rules.Azure](https://azure.github.io/PSRule.Rules.Azure/) `Azure.Default` baseline against the compiled Bicep output, catching Well-Architected Framework deviations (missing diagnostic settings, public network exposure, missing tags, etc.) that a plain `bicep build` cannot detect. It lives at the repo root — matching `sufideen/securebicep`'s convention — so PSRule's own working-directory auto-discovery picks it up with no `-Option` flag; CI passes it explicitly anyway for clarity.
+
+Use `Assert-PSRule`, not `Invoke-PSRule` — `Assert-PSRule` is the cmdlet meant for CI pass/fail gating (non-zero exit on any Fail-level result); `Invoke-PSRule` just returns results without that gating behavior.
 
 ```powershell
 Install-Module -Name PSRule.Rules.Azure -Scope CurrentUser -Force
-Invoke-PSRule -InputPath bicep/ -Module PSRule.Rules.Azure -Option tests/psrule/ps-rule.yaml -Format File
+Assert-PSRule -InputPath bicep -Module PSRule.Rules.Azure -Option ps-rule.yaml -Format File
 ```
 
-Both are wired into CI — see `pipelines/github/security-scan.yml` and the `SecurityScan` stage in `pipelines/azure-devops/azure-pipelines.yml`.
+## Checkov (`/.checkov.yaml`, repo root)
+
+[`.checkov.yaml`](../.checkov.yaml) configures Checkov's Bicep scan, including one documented `skip-check` (a crash in Checkov's own `KeyVaultDisablesPublicNetworkAccess` check against a parameterized value — see the file's comments) and a note on a known Checkov Bicep-parser limitation against `bicep/main.bicep` that doesn't affect the gate (parsing errors don't fail Checkov's exit code). Convention matches `sufideen/securebicep`.
+
+```bash
+pip install checkov
+checkov --config-file .checkov.yaml
+```
+
+All three (Pester, PSRule, Checkov) are wired into CI — see `pipelines/github/security-scan.yml` / `bicep-lint.yml` and the `SecurityScan` stage in `pipelines/azure-devops/azure-pipelines.yml`.

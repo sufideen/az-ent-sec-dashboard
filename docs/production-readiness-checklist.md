@@ -4,7 +4,7 @@
 
 - [x] All resources defined in Bicep, no manual/portal-only configuration required
 - [x] `az bicep build` passes with zero errors on `bicep/main.bicep` and every file in `/modules`
-- [x] All three `bicep/main.*.bicepparam` files build successfully (`az bicep build-params`)
+- [x] All three `bicep/params/*.bicepparam` files build successfully (`az bicep build-params`)
 - [x] No hard-coded secrets in any `.bicep`, `.bicepparam`, or `.json` file (Teams webhook is a `@secure()` parameter, never a literal)
 - [x] Environment-specific behavior (retention, network access, alerting) is parameterized, not hard-coded
 - [ ] `az deployment group what-if` reviewed and approved for the target subscription (run once against real infrastructure before first production apply)

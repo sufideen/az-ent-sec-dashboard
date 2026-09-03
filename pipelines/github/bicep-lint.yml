@@ -47,8 +47,8 @@ jobs:
       - name: Build parameter file (${{ matrix.environment }})
         run: |
           az bicep build-params \
-            --file "bicep/main.${{ matrix.environment }}.bicepparam" \
-            --outfile "/tmp/main.${{ matrix.environment }}.parameters.json"
+            --file "bicep/params/${{ matrix.environment }}.bicepparam" \
+            --outfile "/tmp/${{ matrix.environment }}.parameters.json"
 
       - name: Lint workbook JSON is well-formed
         run: |

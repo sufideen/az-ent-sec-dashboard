@@ -44,7 +44,7 @@ Describe 'What-If deployment (integration)' {
             return
         }
 
-        $paramFile = Join-Path $RepoRoot "bicep/main.$Environment.bicepparam"
+        $paramFile = Join-Path $RepoRoot "bicep/params/$Environment.bicepparam"
         $output = az deployment group what-if `
             --resource-group $rg `
             --template-file $BicepEntry `

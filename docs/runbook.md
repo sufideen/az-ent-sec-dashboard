@@ -39,7 +39,7 @@ Persona membership is managed in Entra ID (add/remove users from the SOC Analyst
 
 ## Onboard a new environment (e.g. a second region)
 
-1. Copy `bicep/main.prod.bicepparam` to `bicep/main.prod-<region>.bicepparam`, adjust `location`, `regionCode`, `instance`.
+1. Copy `bicep/params/prod.bicepparam` to `bicep/params/prod-<region>.bicepparam`, adjust `location`, `regionCode`, `instance`.
 2. Add a matching stage/job to the CI/CD pipeline.
 3. Deploy — resource names are automatically disambiguated via the `instance`/`regionCode` naming variables.
 

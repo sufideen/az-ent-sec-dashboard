@@ -44,7 +44,7 @@ jobs:
           resourceGroupName: ${{ vars.RESOURCE_GROUP_DEV }}
           template: bicep/main.bicep
           parameters: >
-            bicep/main.dev.bicepparam
+            bicep/params/dev.bicepparam
             teamsWebhookUrl=${{ secrets.TEAMS_WEBHOOK_URL_DEV }}
           deploymentMode: Incremental
           failOnStdErr: false
@@ -69,7 +69,7 @@ jobs:
           resourceGroupName: ${{ vars.RESOURCE_GROUP_TEST }}
           template: bicep/main.bicep
           parameters: >
-            bicep/main.test.bicepparam
+            bicep/params/test.bicepparam
             teamsWebhookUrl=${{ secrets.TEAMS_WEBHOOK_URL_TEST }}
           deploymentMode: Incremental
           failOnStdErr: false
@@ -96,7 +96,7 @@ jobs:
           resourceGroupName: ${{ vars.RESOURCE_GROUP_PROD }}
           template: bicep/main.bicep
           parameters: >
-            bicep/main.prod.bicepparam
+            bicep/params/prod.bicepparam
             teamsWebhookUrl=${{ secrets.TEAMS_WEBHOOK_URL_PROD }}
           deploymentMode: Incremental
           failOnStdErr: false

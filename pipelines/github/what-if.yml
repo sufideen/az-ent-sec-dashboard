@@ -43,7 +43,7 @@ jobs:
           scope: resourcegroup
           resourceGroupName: ${{ vars[format('RESOURCE_GROUP_{0}', matrix.environment)] }}
           template: bicep/main.bicep
-          parameters: bicep/main.${{ matrix.environment }}.bicepparam
+          parameters: bicep/params/${{ matrix.environment }}.bicepparam
           deploymentMode: Incremental
           additionalArguments: --what-if --what-if-result-format FullResourcePayloads
 

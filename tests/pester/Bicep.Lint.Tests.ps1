@@ -41,13 +41,13 @@ Describe 'Bicep compilation' {
 
 Describe 'Bicep parameter files' {
 
-    It 'main.<Environment>.bicepparam builds for every supported environment' -TestCases @(
+    It 'params/<Environment>.bicepparam builds for every supported environment' -TestCases @(
         @{ Environment = 'dev' }
         @{ Environment = 'test' }
         @{ Environment = 'prod' }
     ) {
         param($Environment)
-        $paramFile = Join-Path $RepoRoot "bicep/main.$Environment.bicepparam"
+        $paramFile = Join-Path $RepoRoot "bicep/params/$Environment.bicepparam"
         Test-Path $paramFile | Should -BeTrue
 
         $outFile = Join-Path ([System.IO.Path]::GetTempPath()) "main.$Environment.parameters.json"

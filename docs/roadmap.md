@@ -10,7 +10,7 @@
 
 ## Phase 1 — Foundation (Dev)
 
-- [ ] Deploy `bicep/main.dev.bicepparam` with `enableTeamsAlerting = false`
+- [ ] Deploy `bicep/params/dev.bicepparam` with `enableTeamsAlerting = false`
 - [ ] Validate Key Vault, Managed Identity, and RBAC assignments landed correctly
 - [ ] Populate the Teams webhook secret; redeploy with `enableTeamsAlerting = true`
 - [ ] Send a test alert end-to-end (see runbook.md)

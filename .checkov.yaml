@@ -1,0 +1,46 @@
+# Checkov configuration for local runs and CI.
+# Usage: checkov --config-file .checkov.yaml
+#
+# Convention matches sufideen/securebicep's .checkov.yaml: a config file
+# checked into source, not CLI flags buried in pipeline YAML, so a skip has
+# to carry a justification comment to land here.
+framework:
+  - bicep
+directory:
+  - bicep
+  - modules
+compact: true
+quiet: false
+download-external-modules: false
+
+# If you ever need to accept a specific risk, add the check ID here with a
+# comment explaining why, not to silence noise.
+skip-check:
+  # CKV_AZURE_189 (Key Vault disables public network access): Checkov's own
+  # check implementation (KeyVaultDisablesPublicNetworkAccess.py) calls
+  # .lower() on the publicNetworkAccess value assuming it's always a literal
+  # string; modules/key-vault.bicep sets it from a parameterized ternary
+  # (publicNetworkAccessEnabled ? 'Enabled' : 'Disabled'), which Checkov's
+  # Bicep parser represents as a dict, and .lower() on a dict raises
+  # AttributeError - the check crashes rather than evaluating, every run,
+  # regardless of the resolved value. Verified locally (checkov 3.3.16)
+  # before adding this skip. The actual control this check verifies is
+  # covered directly: main.<env>.bicepparam sets
+  # keyVaultPublicNetworkAccessEnabled = false for test/prod (see
+  # docs/architecture.md and docs/production-readiness-checklist.md).
+  - CKV_AZURE_189
+
+# KNOWN LIMITATION (not a suppression, documented here so CI output doesn't
+# look like a silent failure): Checkov's Bicep parser (pycep) cannot parse
+# bicep/main.bicep - confirmed against two independent constructs it doesn't
+# support: the `!empty(...)` negation-of-function-call form used in the RBAC
+# parameter block, and a comment-placement pattern it tokenizes as
+# `_CPP_COMMENT_NL` and fails on. This is a parser gap in Checkov itself, not
+# invalid Bicep - `az bicep build --file bicep/main.bicep` compiles cleanly
+# (see bicep-lint.yml / SecurityScan's own Validate stage). Checkov reports
+# this as "Error parsing file" and moves on; it does NOT fail the run (exit
+# code 0, parsing errors don't count as failed checks) - verified locally.
+# Practical effect: Checkov's real Bicep coverage in this repo is the
+# `modules/` directory; main.bicep's own resource declarations (few - mostly
+# module wiring and the Key Vault secret/role assignment) are covered by
+# PSRule and az bicep build/lint instead.

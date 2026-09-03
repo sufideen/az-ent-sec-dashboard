@@ -10,7 +10,7 @@
 
 ## Parameters you must set per environment
 
-Edit `bicep/main.<env>.bicepparam`:
+Edit `bicep/params/<env>.bicepparam`:
 
 | Parameter | Required | Notes |
 |---|---|---|
@@ -35,14 +35,14 @@ az bicep build --file bicep/main.bicep
 az deployment group what-if \
   --resource-group rg-contoso-secops-dev-eus-001 \
   --template-file bicep/main.bicep \
-  --parameters bicep/main.dev.bicepparam
+  --parameters bicep/params/dev.bicepparam
 
 # Deploy
 az deployment group create \
   --name secops-platform-dev-$(date +%Y%m%d%H%M) \
   --resource-group rg-contoso-secops-dev-eus-001 \
   --template-file bicep/main.bicep \
-  --parameters bicep/main.dev.bicepparam \
+  --parameters bicep/params/dev.bicepparam \
   --parameters teamsWebhookUrl="$TEAMS_WEBHOOK_URL_DEV"
 ```
 
@@ -82,7 +82,7 @@ Repeat for `test` and `prod`, changing the parameter file and resource group.
 
 ## Populating the Teams webhook secret
 
-The Bicep template never contains a real webhook URL. First deployment can set `enableTeamsAlerting = false` (already the default in `main.dev.bicepparam`) to stand up the Key Vault and Logic App shell without a working Teams integration, then:
+The Bicep template never contains a real webhook URL. First deployment can set `enableTeamsAlerting = false` (already the default in `bicep/params/dev.bicepparam`) to stand up the Key Vault and Logic App shell without a working Teams integration, then:
 
 ```bash
 az keyvault secret set \
@@ -105,7 +105,7 @@ Bicep deployments are idempotent and incremental by default (`deploymentMode: In
 az deployment group create \
   --resource-group <rg> \
   --template-file bicep/main.bicep \
-  --parameters bicep/main.<env>.bicepparam \
+  --parameters bicep/params/<env>.bicepparam \
   --rollback-on-error <previous-successful-deployment-name>
 ```
 

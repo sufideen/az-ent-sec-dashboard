@@ -329,23 +329,33 @@ FailedSignins
 | project UserPrincipalName, FailedAttempts, FailedIPs, LastFailureTime = LastFailure, SuccessTime, SuccessIP
 '''
 
-var impossibleTravelQuery = '''
-let MaxPlausibleSpeedKmh = 900.0;
-SigninLogs
+// NOTE: This platform deliberately does NOT ship an "Impossible Travel"
+// scheduled rule, even though kql/identity/impossible-travel.kql exists as a
+// hunting query and workbook tile. sufideen/ztr-entra-lz - the Zero Trust
+// identity-plane landing zone this dashboard is designed to sit on top of -
+// already deploys that exact detection (bicep/modules/sentinel/analyticsRules.bicep,
+// rule "Impossible travel sign-in (Zero Trust)"). Duplicating it here would
+// create two independent Sentinel rules alerting on the same signal in the
+// same workspace. See docs/architecture.md#8-relationship-to-sibling-repositories
+// for the full rule/workbook ownership boundary between the two repos.
+var oauthConsentGrantQuery = '''
+let HighRiskScopes = dynamic([
+    'Mail.Read', 'Mail.ReadWrite', 'Mail.Send',
+    'Files.ReadWrite.All', 'Sites.ReadWrite.All',
+    'Directory.ReadWrite.All', 'RoleManagement.ReadWrite.Directory',
+    'MailboxSettings.ReadWrite', 'User.ReadWrite.All'
+]);
+AuditLogs
 | where TimeGenerated > ago(1h)
-| where ResultType == '0'
-| where isnotempty(LocationDetails)
-| extend Latitude = todouble(LocationDetails.geoCoordinates.latitude), Longitude = todouble(LocationDetails.geoCoordinates.longitude)
-| where isnotempty(Latitude) and isnotempty(Longitude)
-| sort by UserPrincipalName asc, TimeGenerated asc
-| serialize
-| extend PrevTime = prev(TimeGenerated), PrevUser = prev(UserPrincipalName), PrevLat = prev(Latitude), PrevLon = prev(Longitude)
-| where UserPrincipalName == PrevUser
-| extend HoursElapsed = datetime_diff('second', TimeGenerated, PrevTime) / 3600.0, DistanceKm = geo_distance_2points(Longitude, Latitude, PrevLon, PrevLat) / 1000.0
-| where HoursElapsed > 0 and DistanceKm > 250
-| extend ImpliedSpeedKmh = DistanceKm / HoursElapsed
-| where ImpliedSpeedKmh > MaxPlausibleSpeedKmh
-| project TimeGenerated, UserPrincipalName, DistanceKm = round(DistanceKm,0), ImpliedSpeedKmh = round(ImpliedSpeedKmh,0), IPAddress, AppDisplayName
+| where OperationName == 'Consent to application'
+| extend AppDisplayName = tostring(TargetResources[0].displayName)
+| extend GrantedBy = tostring(InitiatedBy.user.userPrincipalName)
+| extend ModifiedProps = TargetResources[0].modifiedProperties
+| mv-expand ModifiedProps
+| where tostring(ModifiedProps.displayName) in ('ConsentAction.Permissions', 'Scope', 'DelegatedPermissionGrant.Scope')
+| extend Scopes = tostring(ModifiedProps.newValue)
+| where Scopes has_any (HighRiskScopes)
+| project TimeGenerated, AppDisplayName, GrantedBy, Scopes, CorrelationId
 '''
 
 var failedSigninSpikeQuery = '''
@@ -404,21 +414,21 @@ module sentinelRules '../modules/sentinel-rules.bicep' = if (enableAnalyticsRule
         suppressionDuration: 'PT1H'
       }
       {
-        ruleIdSeed: 'impossible-travel-v1'
-        displayName: '[SecOps Platform] Impossible Travel Sign-in'
-        description: 'Detects successful sign-ins by the same user from two locations implying travel faster than physically possible.'
+        ruleIdSeed: 'high-risk-oauth-consent-v1'
+        displayName: '[SecOps Platform] High-Risk OAuth Consent Grant'
+        description: 'Detects consent grants to app registrations requesting high-privilege Graph scopes (mail, files, directory) - a persistence technique that survives password resets and bypasses MFA.'
         severity: 'Medium'
         enabled: true
-        query: impossibleTravelQuery
+        query: oauthConsentGrantQuery
         queryFrequency: 'PT1H'
         queryPeriod: 'PT1H'
         triggerOperator: 'GreaterThan'
         triggerThreshold: 0
         tactics: [
-          'InitialAccess'
+          'Persistence'
         ]
         techniques: [
-          'T1078'
+          'T1098'
         ]
         suppressionEnabled: false
         suppressionDuration: 'PT1H'

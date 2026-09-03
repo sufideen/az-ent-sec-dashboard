@@ -43,8 +43,7 @@ jobs:
       - name: Run Checkov
         uses: bridgecrewio/checkov-action@v12
         with:
-          directory: .
-          framework: bicep
+          config_file: .checkov.yaml
           output_format: sarif
           output_file_path: checkov-results.sarif
           soft_fail: false
@@ -80,7 +79,8 @@ jobs:
         uses: microsoft/ps-rule@v2.9.0
         with:
           modules: 'PSRule.Rules.Azure'
-          inputPath: 'bicep/'
+          inputPath: 'bicep'
+          option: 'ps-rule.yaml'
           outputFormat: Sarif
           outputPath: reports/psrule-results.sarif
 

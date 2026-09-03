@@ -117,3 +117,38 @@ Because of this, `modules/diagnostic-settings.bicep` in this repo is intentional
 | Cost optimization | No new Log Analytics ingestion beyond the platform's own low-volume diagnostic logs; workbook queries are free reads |
 | Operational excellence | 3-stage CI/CD (Validate/SecurityScan/WhatIf) before any deploy; environment-gated promotion |
 | Performance efficiency | Scheduled rules run hourly (not continuous), matched to realistic SOC triage cadence |
+
+## 8. Relationship to sibling repositories
+
+This repo is the top layer of a three-repo Azure security platform, not a standalone exercise. Each layer deploys at a different Azure scope and owns a distinct, non-overlapping set of Sentinel content:
+
+```mermaid
+flowchart TB
+    subgraph L1["Layer 1 — sufideen/azl-bicepdeploy (tenant / mgmt-group / subscription scope)"]
+        L1a[Management group hierarchy]
+        L1b[Azure Policy definitions & assignments]
+        L1c["Log Analytics Workspace<br/>(Sentinel-ready)"]
+    end
+    subgraph L2["Layer 2 — sufideen/ztr-entra-lz (subscription scope)"]
+        L2a[Conditional Access + PIM + custom RBAC roles]
+        L2b["Sentinel rules: impossible travel,<br/>PIM-outside-hours, CA policy modified,<br/>guest created outside Access Package"]
+        L2c["'Zero Trust Landing Zone - Compliance<br/>Evidence' workbook (ISO 27001 evidence)"]
+    end
+    subgraph L3["Layer 3 — this repo, sufideen/az-ent-sec-dashboard (resource group scope)"]
+        L3a["Sentinel rules: brute force, high-risk<br/>OAuth consent, sign-in/CA failure spikes,<br/>privileged role change"]
+        L3b["Executive / SOC / Zero Trust operational<br/>dashboards + Teams/email alerting"]
+    end
+    L1c --> L2b
+    L1c --> L3a
+    L2b -.complements, no overlap.-> L3a
+```
+
+**Why this matters**: an earlier version of this repo's analytics-rule pack included an "Impossible Travel" scheduled rule that duplicated a rule `ztr-entra-lz` already deploys (`bicep/modules/sentinel/analyticsRules.bicep`, rule `impossible-travel-rule` / displayName "Impossible travel sign-in (Zero Trust)"). Deploying both into the same Sentinel workspace would have created two independent rules alerting on the same signal — noisy, and a sign the two repos weren't designed as one system. That rule was replaced with **High-Risk OAuth Consent Grant** (`kql/identity/oauth-consent-grants.kql`), which has no equivalent in `ztr-entra-lz`. `kql/identity/impossible-travel.kql` remains in this repo's query library as a hunting query and SOC Dashboard workbook tile — read-only analyst tooling, not a second deployed Sentinel rule, so it does not re-create the duplication.
+
+| | Owns (Sentinel rules) | Owns (workbooks) | Deployed at |
+|---|---|---|---|
+| `azl-bicepdeploy` | — | — | tenant / management group / subscription |
+| `ztr-entra-lz` | Impossible travel sign-in; PIM activation outside business hours; Conditional Access policy modified outside pipeline; guest account created outside Access Package | "Zero Trust Landing Zone - Compliance Evidence" (ISO 27001 control evidence) | subscription |
+| `az-ent-sec-dashboard` (this repo) | Brute force sign-in pattern; high-risk OAuth consent grant; failed sign-in spike; Conditional Access failure spike; privileged role assignment | Executive Security Dashboard; SOC Dashboard; Zero Trust Dashboard (live operational KPIs, not compliance evidence) | resource group |
+
+`ztr-entra-lz`'s rules watch the **identity control plane itself** (is CA/PIM/guest-access configuration being tampered with, off-schedule, or outside the pipeline). This repo's rules watch **user and application behavior** (credential abuse, consent abuse, privilege changes) and turn both repos' Sentinel output into the reporting layer SOC/Executive/Security-Admin audiences actually look at day to day. Deploy `azl-bicepdeploy` first, `ztr-entra-lz` second (it needs the Log Analytics Workspace `azl-bicepdeploy` creates and Sentinel enabled on it), then this repo third, pointed at the same workspace via `existingLogAnalyticsWorkspaceName`.
