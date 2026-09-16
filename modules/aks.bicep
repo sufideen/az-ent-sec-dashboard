@@ -105,9 +105,17 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-11-01' = {
         maxPods: 30
       }
     ]
+    // Standard (flat) Azure CNI, NOT Overlay: AGIC requires pod IPs to be
+    // real, routable VNet addresses so the Application Gateway (which lives
+    // in its own VNet subnet, outside the cluster's overlay network) can
+    // reach them directly for its backend pool. Confirmed by a real 502
+    // Bad Gateway - Overlay mode's pod IPs are unreachable from the gateway
+    // subnet. This is a documented AGIC limitation, not a config option.
+    // The larger IP consumption this requires is already accounted for -
+    // snet-aks is sized /20 (4096 addresses), comfortably covering up to 5
+    // nodes x maxPods 30 plus node IPs.
     networkProfile: {
       networkPlugin: 'azure'
-      networkPluginMode: 'overlay'
       networkPolicy: 'azure'
       loadBalancerSku: 'standard'
       outboundType: 'loadBalancer'
