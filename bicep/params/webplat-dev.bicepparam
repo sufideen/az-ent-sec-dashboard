@@ -7,10 +7,8 @@ param workloadName = 'webplat'
 param instance = '001'
 param regionCode = 'uks'
 
-// Replace with the real name/resource group of your existing Log Analytics
-// Workspace - run `az monitor log-analytics workspace list -o table` to find it.
-param existingLogAnalyticsWorkspaceName = 'log-itsolutions-security-uks-001'
-param existingLogAnalyticsWorkspaceResourceGroup = 'rg-itsolutions-security-uks-001'
+param existingLogAnalyticsWorkspaceName = 'law-ictlabs-central-dev-uksouth'
+param existingLogAnalyticsWorkspaceResourceGroup = 'rg-ictlabs-connectivity-dev-uksouth'
 
 // Entra ID group object ID for "AKS-WebPlat-Admins" - replace with the real
 // group ID for the dev tenant before deploying. Members get Azure RBAC
