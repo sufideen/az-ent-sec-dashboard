@@ -39,8 +39,8 @@ jobs:
           az aks command invoke \
             -g ${{ vars.RESOURCE_GROUP_DEV_WEBPLAT }} \
             -n ${{ vars.AKS_NAME_DEV }} \
-            --command "kubectl apply -k ." \
-            --file-path k8s/overlays/dev
+            --command "kubectl apply -k k8s/overlays/dev" \
+            --file k8s
       - name: Wait for rollout
         run: |
           az aks command invoke \
@@ -66,8 +66,8 @@ jobs:
           az aks command invoke \
             -g ${{ vars.RESOURCE_GROUP_PROD_WEBPLAT }} \
             -n ${{ vars.AKS_NAME_PROD }} \
-            --command "kubectl apply -k ." \
-            --file-path k8s/overlays/prod
+            --command "kubectl apply -k k8s/overlays/prod" \
+            --file k8s
       - name: Wait for rollout
         run: |
           az aks command invoke \

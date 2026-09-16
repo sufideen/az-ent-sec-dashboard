@@ -195,7 +195,7 @@ offboarding an administrator is a group-membership change — no redeploy.
    — only `privateFQDN` is populated.
 4. `az aks command invoke -g <rg> -n <cluster> --command "kubectl get nodes -o wide"`
    returns `Ready` nodes.
-5. `az aks command invoke ... --command "kubectl apply -k ." --file-path k8s/overlays/dev`
+5. `az aks command invoke ... --command "kubectl apply -k k8s/overlays/dev" --file k8s`
    then `kubectl -n demo-web get pods` shows `Running` pods passing readiness.
 6. `kubectl describe pod <pod>` shows no `ImagePullBackOff`; the ACR
    diagnostic logs in the shared Log Analytics Workspace show a `Pull`
