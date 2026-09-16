@@ -1,0 +1,63 @@
+name: Webplat What-If Deployment
+
+# Runs `az deployment group what-if` for the webplat infra on each PR so
+# reviewers can see the exact resource-level impact before merge. Requires
+# federated OIDC credentials scoped to this workload (AZURE_CLIENT_ID_WEBPLAT
+# / AZURE_TENANT_ID / AZURE_SUBSCRIPTION_ID) - see docs/webplat-architecture.md.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'bicep/webplat.bicep'
+      - 'bicep/params/webplat-*.bicepparam'
+      - 'modules/network.bicep'
+      - 'modules/acr.bicep'
+      - 'modules/aks.bicep'
+      - 'modules/appgw-ingress.bicep'
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  what-if:
+    name: What-If (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, prod]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID_WEBPLAT }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Run What-If
+        uses: azure/arm-deploy@v2
+        with:
+          scope: resourcegroup
+          resourceGroupName: ${{ vars[format('RESOURCE_GROUP_{0}_WEBPLAT', matrix.environment)] }}
+          template: bicep/webplat.bicep
+          parameters: bicep/params/webplat-${{ matrix.environment }}.bicepparam
+          deploymentMode: Incremental
+          additionalArguments: --what-if --what-if-result-format FullResourcePayloads
+
+      - name: Comment What-If result on PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `#### Webplat What-If (${{ matrix.environment }})\n\nSee job logs for the full resource-level diff: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });

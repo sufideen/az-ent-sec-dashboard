@@ -1,0 +1,51 @@
+name: Webplat Bicep Lint
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'bicep/webplat.bicep'
+      - 'bicep/params/webplat-*.bicepparam'
+      - 'modules/network.bicep'
+      - 'modules/acr.bicep'
+      - 'modules/aks.bicep'
+      - 'modules/appgw-ingress.bicep'
+      - 'modules/diagnostic-settings.bicep'
+      - 'modules/key-vault.bicep'
+  push:
+    branches: [main]
+    paths:
+      - 'bicep/webplat.bicep'
+      - 'bicep/params/webplat-*.bicepparam'
+      - 'modules/network.bicep'
+      - 'modules/acr.bicep'
+      - 'modules/aks.bicep'
+      - 'modules/appgw-ingress.bicep'
+      - 'modules/diagnostic-settings.bicep'
+      - 'modules/key-vault.bicep'
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint & build webplat Bicep templates
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, prod]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Bicep CLI
+        run: az bicep install
+
+      - name: Bicep lint (build with linter, warnings fail on 'error' level rules)
+        run: az bicep build --file bicep/webplat.bicep --stdout > /dev/null
+
+      - name: Build parameter file (${{ matrix.environment }})
+        run: |
+          az bicep build-params \
+            --file "bicep/params/webplat-${{ matrix.environment }}.bicepparam" \
+            --outfile "/tmp/webplat-${{ matrix.environment }}.parameters.json"

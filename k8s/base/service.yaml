@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-web
+  namespace: demo-web
+  labels:
+    app: demo-web
+spec:
+  type: ClusterIP
+  selector:
+    app: demo-web
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http

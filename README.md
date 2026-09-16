@@ -36,6 +36,15 @@ CI/CD gating conventions (Checkov + PSRule as hard merge gates, root-level `.che
 
 Sentinel itself, the Log Analytics Workspace, Defender for Cloud, Entra ID Conditional Access policies, or Azure Policy assignments — these are assumed to already exist per the environment this platform targets, deployed by `azl-bicepdeploy` and `ztr-entra-lz` above. `bicep/main.bicep` references the workspace as an `existing` resource.
 
+## Secure AKS web platform (`webplat`)
+
+A second, self-contained workload also lives in this repo: a private AKS
+cluster + private ACR + Application Gateway (WAF_v2) ingress for hosting a
+company website, with a working Nginx demo app and GitHub Actions CI/CD
+(OIDC, no stored secrets). It's independent of the secops platform above —
+see [`docs/webplat-architecture.md`](docs/webplat-architecture.md) for the
+full design, administrator runbook, and security checklist.
+
 ## Repository structure
 
 ```
