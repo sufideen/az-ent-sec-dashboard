@@ -170,6 +170,67 @@ module keyVault '../modules/key-vault.bicep' = {
   }
 }
 
+// Private endpoint for the Key Vault - publicNetworkAccessEnabled is false
+// above, so without this the vault is unreachable by anything, including
+// the AKS Key Vault Secrets Provider add-on that needs to read the TLS cert.
+resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: 'privatelink.vaultcore.azure.net'
+  location: 'global'
+  tags: tags
+}
+
+resource keyVaultPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: keyVaultPrivateDnsZone
+  name: '${uniqueString(network.outputs.vnetId)}-kv-link'
+  location: 'global'
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: network.outputs.vnetId
+    }
+  }
+}
+
+resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-09-01' = {
+  name: 'pe-${keyVaultName}'
+  location: location
+  tags: tags
+  properties: {
+    subnet: {
+      id: network.outputs.peSubnetId
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'pe-${keyVaultName}-connection'
+        properties: {
+          privateLinkServiceId: keyVaultRef.id
+          groupIds: [
+            'vault'
+          ]
+        }
+      }
+    ]
+  }
+  dependsOn: [
+    keyVault
+  ]
+}
+
+resource keyVaultPrivateEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-09-01' = {
+  parent: keyVaultPrivateEndpoint
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'privatelink-vaultcore-azure-net'
+        properties: {
+          privateDnsZoneId: keyVaultPrivateDnsZone.id
+        }
+      }
+    ]
+  }
+}
+
 // =========================================================================
 // 3. Application Gateway (WAF_v2 shell - AGIC manages listeners/rules)
 // =========================================================================
