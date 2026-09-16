@@ -39,8 +39,8 @@ in the same Sentinel/SOC pipeline the rest of this repo already reports on.
   (same workspace the secops Sentinel/SOC dashboards already query)
 ```
 
-Resource groups: `rg-itsolutions-webplat-dev-eus-001`,
-`rg-itsolutions-webplat-prod-eus-001`.
+Resource groups: `rg-itsolutions-webplat-dev-uks-001`,
+`rg-itsolutions-webplat-prod-uks-001`.
 
 ### Security posture
 
@@ -89,8 +89,8 @@ k8s/overlays/{dev,prod}/             # per-environment image tag, replicas, host
 
 ## One-time setup (before first deploy)
 
-1. **Create resource groups**: `rg-itsolutions-webplat-dev-eus-001` and
-   `rg-itsolutions-webplat-prod-eus-001`.
+1. **Create resource groups**: `rg-itsolutions-webplat-dev-uks-001` and
+   `rg-itsolutions-webplat-prod-uks-001`.
 2. **Create the `AKS-WebPlat-Admins` Entra ID group** and add its object ID
    to `aksAdminsGroupObjectId` in both `.bicepparam` files.
 3. **Register the OIDC app** for GitHub Actions:
@@ -141,8 +141,8 @@ a laptop by design. Both CI and human administrators use the same
 mechanism:
 
 ```bash
-az aks command invoke -g rg-itsolutions-webplat-prod-eus-001 \
-  -n aks-itsolutions-webplat-prod-eus-001 \
+az aks command invoke -g rg-itsolutions-webplat-prod-uks-001 \
+  -n aks-itsolutions-webplat-prod-uks-001 \
   --command "kubectl get pods -n demo-web"
 ```
 

@@ -53,8 +53,8 @@ param workloadName string = 'webplat'
 @description('Instance suffix for CAF resource names (e.g. \'001\') - increment to support multiple parallel deployments.')
 param instance string = '001'
 
-@description('Short region code used in CAF resource names, e.g. \'eus\' for East US.')
-param regionCode string = 'eus'
+@description('Short region code used in CAF resource names, e.g. \'uks\' for UK South.')
+param regionCode string = 'uks'
 
 @description('Standard tags applied to every resource created by this template.')
 param tags object = {
