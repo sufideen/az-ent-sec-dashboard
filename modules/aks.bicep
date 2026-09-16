@@ -84,6 +84,10 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-11-01' = {
     apiServerAccessProfile: {
       enablePrivateCluster: true
       privateDNSZone: 'system'
+      // Without this, AKS still publishes a public DNS record for the
+      // cluster (resolving to the private IP, so not actually reachable
+      // from the internet - but an unnecessary public DNS footprint).
+      enablePrivateClusterPublicFQDN: false
     }
     agentPoolProfiles: [
       {
