@@ -47,7 +47,13 @@ Resource groups: `rg-itsolutions-webplat-dev-uks-001`,
 - **No public AKS API server** — `apiServerAccessProfile.enablePrivateCluster: true`,
   AKS-managed private DNS zone.
 - **No ACR admin user** — nodes pull images via the AKS kubelet's managed
-  identity, granted `AcrPull` scoped to the registry only.
+  identity, granted `AcrPull` scoped to the registry only. ACR's public
+  network access is enabled (default-deny network rule set) because
+  GitHub-hosted Actions runners push from outside this VNet and have no
+  fixed IP range to allow-list; AKS's own pulls still use the private
+  endpoint/DNS zone. Push/pull is gated entirely by Entra ID + RBAC either
+  way - a self-hosted, VNet-joined runner (see Deferred) would allow going
+  fully private.
 - **Entra ID + Azure RBAC for Kubernetes authorization** — cluster access is
   an Entra ID group membership (`aksAdminsGroupObjectId`), not a static
   kubeconfig or client certificate. `disableLocalAccounts: true`.
