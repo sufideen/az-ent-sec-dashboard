@@ -181,7 +181,7 @@ resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' =
 
 resource keyVaultPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   parent: keyVaultPrivateDnsZone
-  name: '${uniqueString(network.outputs.vnetId)}-kv-link'
+  name: '${vnetName}-kv-link'
   location: 'global'
   properties: {
     registrationEnabled: false
