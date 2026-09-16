@@ -1,5 +1,4 @@
 name: Webplat What-If Deployment
-# (touch to force a fresh pull_request-triggered run while verifying OIDC)
 
 # Runs `az deployment group what-if` for the webplat infra on each PR so
 # reviewers can see the exact resource-level impact before merge. Requires
@@ -52,6 +51,9 @@ jobs:
           parameters: bicep/params/webplat-${{ matrix.environment }}.bicepparam
           deploymentMode: Incremental
           additionalArguments: --what-if --what-if-result-format FullResourcePayloads
+          # What-If is read-only; don't fail on the pre-existing benign
+          # BCP334 length-validation warnings az CLI writes to stderr.
+          failOnStdErr: false
 
       - name: Comment What-If result on PR
         if: always() && github.event_name == 'pull_request'
