@@ -77,6 +77,10 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-11-01' = {
   properties: {
     dnsPrefix: dnsPrefix
     kubernetesVersion: kubernetesVersion
+    // The default auto-generated node RG name (MC_<rg>_<cluster>_<region>)
+    // exceeds Azure's 80-char limit once CAF-length names are combined -
+    // set an explicit, shorter one instead.
+    nodeResourceGroup: 'rg-nodes-${clusterName}'
     apiServerAccessProfile: {
       enablePrivateCluster: true
       privateDNSZone: 'system'
