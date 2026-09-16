@@ -26,12 +26,19 @@ patches:
         path: /spec/tls/0/hosts/0
         value: dev.webplat.itsolutions.example.com
   - target:
+      kind: NetworkPolicy
+      name: demo-web-allow-ingress-from-agic
+    patch: |-
+      - op: replace
+        path: /spec/ingress/0/from/0/ipBlock/cidr
+        value: 10.30.16.0/24
+  - target:
       kind: SecretProviderClass
       name: webplat-tls
     patch: |-
       - op: replace
         path: /spec/parameters/userAssignedIdentityID
-        value: 7be5bb70-94c3-4269-97b2-f879173c10c2
+        value: 9dd4c91c-7963-434b-9f80-805856a718d2
       - op: replace
         path: /spec/parameters/keyvaultName
         value: kvwebplatdev3r4cvt3hsiof
