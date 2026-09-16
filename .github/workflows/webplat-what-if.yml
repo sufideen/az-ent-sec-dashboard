@@ -1,4 +1,5 @@
 name: Webplat What-If Deployment
+# (touch to force a fresh pull_request-triggered run while verifying OIDC)
 
 # Runs `az deployment group what-if` for the webplat infra on each PR so
 # reviewers can see the exact resource-level impact before merge. Requires
