@@ -29,6 +29,29 @@ param autoscaleMaxCapacity int = 3
 @description('Tags applied to every resource in this module.')
 param tags object = {}
 
+// Azure retired direct (inline) WAF configuration on Application Gateway -
+// a WAF policy must now be a separate resource, associated via
+// properties.firewallPolicy on the gateway (ApplicationGatewayWafConfigurationDeprecated).
+resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2023-09-01' = {
+  name: 'waf-${appGatewayName}'
+  location: location
+  tags: tags
+  properties: {
+    policySettings: {
+      state: 'Enabled'
+      mode: 'Prevention'
+    }
+    managedRules: {
+      managedRuleSets: [
+        {
+          ruleSetType: 'OWASP'
+          ruleSetVersion: '3.2'
+        }
+      ]
+    }
+  }
+}
+
 resource publicIp 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
   name: publicIpName
   location: location
@@ -54,11 +77,8 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-09-01' = {
       minCapacity: autoscaleMinCapacity
       maxCapacity: autoscaleMaxCapacity
     }
-    webApplicationFirewallConfiguration: {
-      enabled: true
-      firewallMode: 'Prevention'
-      ruleSetType: 'OWASP'
-      ruleSetVersion: '3.2'
+    firewallPolicy: {
+      id: wafPolicy.id
     }
     gatewayIPConfigurations: [
       {

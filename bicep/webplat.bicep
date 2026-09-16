@@ -53,8 +53,8 @@ param workloadName string = 'webplat'
 @description('Instance suffix for CAF resource names (e.g. \'001\') - increment to support multiple parallel deployments.')
 param instance string = '001'
 
-@description('Short region code used in CAF resource names, e.g. \'eus\' for East US.')
-param regionCode string = 'eus'
+@description('Short region code used in CAF resource names, e.g. \'uks\' for UK South.')
+param regionCode string = 'uks'
 
 @description('Standard tags applied to every resource created by this template.')
 param tags object = {
@@ -101,14 +101,14 @@ param peSubnetPrefix string = '10.30.17.0/24'
 // AKS sizing
 // -----------------------------------------------------------------------
 
-@description('Kubernetes version.')
-param kubernetesVersion string = '1.29.7'
+@description('Kubernetes version. Check `az aks get-versions --location <region>` for what your region currently supports before deploying.')
+param kubernetesVersion string = '1.36.3'
 
 @description('VM size for the system node pool.')
-param systemNodeVmSize string = 'Standard_D2s_v5'
+param systemNodeVmSize string = 'Standard_D2s_v4'
 
 @description('VM size for the user (workload) node pool.')
-param userNodeVmSize string = 'Standard_D2s_v5'
+param userNodeVmSize string = 'Standard_D2s_v4'
 
 @description('Node count for the system pool.')
 param systemNodeCount int = (environmentName == 'prod') ? 3 : 2

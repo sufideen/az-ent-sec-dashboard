@@ -37,10 +37,10 @@ param kubernetesVersion string
 param aksSubnetId string
 
 @description('VM size for the system node pool.')
-param systemNodeVmSize string = 'Standard_D2s_v5'
+param systemNodeVmSize string = 'Standard_D2s_v4'
 
 @description('VM size for the user (workload) node pool.')
-param userNodeVmSize string = 'Standard_D2s_v5'
+param userNodeVmSize string = 'Standard_D2s_v4'
 
 @description('Node count for the system pool.')
 param systemNodeCount int
@@ -77,6 +77,10 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-11-01' = {
   properties: {
     dnsPrefix: dnsPrefix
     kubernetesVersion: kubernetesVersion
+    // The default auto-generated node RG name (MC_<rg>_<cluster>_<region>)
+    // exceeds Azure's 80-char limit once CAF-length names are combined -
+    // set an explicit, shorter one instead.
+    nodeResourceGroup: 'rg-nodes-${clusterName}'
     apiServerAccessProfile: {
       enablePrivateCluster: true
       privateDNSZone: 'system'
@@ -91,7 +95,9 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-11-01' = {
         osSKU: 'AzureLinux'
         type: 'VirtualMachineScaleSets'
         vnetSubnetID: aksSubnetId
-        onlyCriticalAddonsTaint: true
+        nodeTaints: [
+          'CriticalAddonsOnly=true:NoSchedule'
+        ]
         maxPods: 30
       }
     ]
@@ -155,7 +161,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-11-01' = {
   }
 }
 
-// Workloads never land on the system pool (onlyCriticalAddonsTaint above) -
+// Workloads never land on the system pool (CriticalAddonsOnly taint above) -
 // the demo web app (and anything else) is scheduled onto this pool instead.
 resource userPool 'Microsoft.ContainerService/managedClusters/agentPools@2023-11-01' = {
   parent: aks

@@ -111,17 +111,12 @@ resource diagAks 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if
   scope: aksCluster
   properties: {
     workspaceId: logAnalyticsWorkspaceId
+    // A diagnostic setting can't mix categoryGroup and individual category
+    // entries - 'allLogs' is a superset that already includes kube-apiserver,
+    // guard, kube-audit, kube-audit-admin, etc.
     logs: [
       {
-        categoryGroup: 'audit'
-        enabled: true
-      }
-      {
-        category: 'kube-apiserver'
-        enabled: true
-      }
-      {
-        category: 'guard'
+        categoryGroup: 'allLogs'
         enabled: true
       }
     ]
