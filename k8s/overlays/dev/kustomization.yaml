@@ -23,10 +23,10 @@ patches:
     patch: |-
       - op: replace
         path: /spec/rules/0/host
-        value: dev.webplat.itsolutions.example.com
+        value: dev-webplat.ict-cloud.solutions
       - op: replace
         path: /spec/tls/0/hosts/0
-        value: dev.webplat.itsolutions.example.com
+        value: dev-webplat.ict-cloud.solutions
   - target:
       kind: NetworkPolicy
       name: demo-web-allow-ingress-from-agic
