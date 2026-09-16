@@ -195,7 +195,9 @@ offboarding an administrator is a group-membership change — no redeploy.
    — only `privateFQDN` is populated.
 4. `az aks command invoke -g <rg> -n <cluster> --command "kubectl get nodes -o wide"`
    returns `Ready` nodes.
-5. `az aks command invoke ... --command "kubectl apply -k k8s/overlays/dev" --file k8s`
+5. `az aks command invoke ... --command "kubectl apply -k k8s/overlays/dev" --file <each file under k8s/, repeated>`
+   (some `az aks` CLI versions reject a bare directory for `--file` - pass every file explicitly, e.g. via
+   `while IFS= read -r -d '' f; do FILE_ARGS+=(--file "$f"); done < <(find k8s -type f -print0)`)
    then `kubectl -n demo-web get pods` shows `Running` pods passing readiness.
 6. `kubectl describe pod <pod>` shows no `ImagePullBackOff`; the ACR
    diagnostic logs in the shared Log Analytics Workspace show a `Pull`
