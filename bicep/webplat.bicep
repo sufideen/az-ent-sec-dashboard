@@ -369,6 +369,30 @@ resource agicReaderOnRg 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   }
 }
 
+// Contributor on the gateway resource does NOT include permission to join
+// its subnet (the subnet is a child of the VNet, a different resource) -
+// AGIC's CreateOrUpdate PUT fails with ApplicationGatewayInsufficientPermissionOnSubnet
+// without this, confirmed by a real deployment failure.
+resource vnetRef 'Microsoft.Network/virtualNetworks@2023-09-01' existing = {
+  name: vnetName
+}
+
+resource appGwSubnetRef 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' existing = {
+  parent: vnetRef
+  name: 'snet-appgw'
+}
+
+resource agicNetworkContributorOnSubnet 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(appGwSubnetRef.id, aksName, 'NetworkContributor-AGIC')
+  scope: appGwSubnetRef
+  properties: {
+    principalId: aks.outputs.ingressApplicationGatewayIdentityObjectId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4d97b98b-1d4f-4787-a291-c67834d212e7') // Network Contributor
+    description: 'Allows the AGIC add-on to join the Application Gateway subnet - required for CreateOrUpdate on the gateway, separate from Contributor on the gateway resource itself.'
+  }
+}
+
 // =========================================================================
 // 9. Diagnostic settings -> existing Log Analytics Workspace
 // =========================================================================
