@@ -1,0 +1,53 @@
+# Default-deny, explicit allow: the site accepts traffic only from AGIC
+# (the Application Gateway ingress add-on's pods live in kube-system) and
+# needs no outbound access beyond DNS - it's a static site.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: demo-web-default-deny
+  namespace: demo-web
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: demo-web-allow-ingress-from-agic
+  namespace: demo-web
+spec:
+  podSelector:
+    matchLabels:
+      app: demo-web
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: demo-web-allow-dns-egress
+  namespace: demo-web
+spec:
+  podSelector:
+    matchLabels:
+      app: demo-web
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

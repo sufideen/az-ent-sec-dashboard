@@ -1,0 +1,34 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: demo-web
+resources:
+  - ../../base
+images:
+  - name: demo-web
+    newName: REPLACE_WITH_ACR_LOGIN_SERVER/demo-web
+    newTag: REPLACE_WITH_IMAGE_TAG
+patches:
+  - target:
+      kind: Deployment
+      name: demo-web
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: demo-web
+    patch: |-
+      - op: replace
+        path: /spec/maxReplicas
+        value: 5
+  - target:
+      kind: Ingress
+      name: demo-web
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: www.itsolutions.example.com
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: www.itsolutions.example.com

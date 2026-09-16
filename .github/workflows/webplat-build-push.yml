@@ -1,0 +1,52 @@
+name: Webplat Build & Push Demo App
+
+# Builds the demo Nginx site image and pushes it to the webplat ACR, tagged
+# with the commit SHA. Authenticates to Azure via OIDC (no stored ACR
+# credentials, no admin user on the registry).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-push:
+    name: Build & push (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, prod]
+    environment: ${{ matrix.environment == 'prod' && 'production' || 'dev' }}
+    outputs:
+      imageTag: ${{ github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID_WEBPLAT }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: ACR login (OIDC-backed token, no admin user)
+        run: az acr login --name ${{ vars[format('ACR_NAME_{0}', matrix.environment)] }}
+
+      - name: Build image
+        run: |
+          docker build \
+            -t ${{ vars[format('ACR_NAME_{0}', matrix.environment)] }}.azurecr.io/demo-web:${{ github.sha }} \
+            -t ${{ vars[format('ACR_NAME_{0}', matrix.environment)] }}.azurecr.io/demo-web:latest \
+            app/
+
+      - name: Push image
+        run: |
+          docker push ${{ vars[format('ACR_NAME_{0}', matrix.environment)] }}.azurecr.io/demo-web:${{ github.sha }}
+          docker push ${{ vars[format('ACR_NAME_{0}', matrix.environment)] }}.azurecr.io/demo-web:latest

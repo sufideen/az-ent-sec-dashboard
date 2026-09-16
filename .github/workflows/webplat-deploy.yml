@@ -1,0 +1,80 @@
+name: Webplat Deploy
+
+# Progressive delivery: Dev deploys automatically on merge to main. Prod is
+# gated by the "production" GitHub Environment's required-reviewer approval
+# (Settings > Environments), the same mechanism already configured for the
+# secops pipeline (see docs/deployment-guide.md).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'bicep/webplat.bicep'
+      - 'bicep/params/webplat-*.bicepparam'
+      - 'modules/network.bicep'
+      - 'modules/acr.bicep'
+      - 'modules/aks.bicep'
+      - 'modules/appgw-ingress.bicep'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy (leave blank to run dev then prod)'
+        type: choice
+        options: [dev, prod]
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-dev:
+    name: Deploy - Dev
+    if: ${{ github.event.inputs.environment == '' || github.event.inputs.environment == 'dev' }}
+    runs-on: ubuntu-latest
+    environment: dev
+    outputs:
+      resourceGroup: ${{ vars.RESOURCE_GROUP_DEV_WEBPLAT }}
+      aksName: ${{ steps.deploy.outputs.aksName }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID_WEBPLAT }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy Bicep (dev)
+        id: deploy
+        uses: azure/arm-deploy@v2
+        with:
+          scope: resourcegroup
+          resourceGroupName: ${{ vars.RESOURCE_GROUP_DEV_WEBPLAT }}
+          template: bicep/webplat.bicep
+          parameters: bicep/params/webplat-dev.bicepparam
+          deploymentMode: Incremental
+          failOnStdErr: false
+
+  deploy-prod:
+    name: Deploy - Prod
+    needs: deploy-dev
+    if: ${{ always() && (needs.deploy-dev.result == 'success' || needs.deploy-dev.result == 'skipped') && (github.event.inputs.environment == '' || github.event.inputs.environment == 'prod') }}
+    runs-on: ubuntu-latest
+    # 'environment: production' enforces the required-reviewer approval gate
+    # configured in Settings > Environments > production.
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID_WEBPLAT }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy Bicep (prod)
+        uses: azure/arm-deploy@v2
+        with:
+          scope: resourcegroup
+          resourceGroupName: ${{ vars.RESOURCE_GROUP_PROD_WEBPLAT }}
+          template: bicep/webplat.bicep
+          parameters: bicep/params/webplat-prod.bicepparam
+          deploymentMode: Incremental
+          failOnStdErr: false

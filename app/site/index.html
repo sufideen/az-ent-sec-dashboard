@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ITSolutions Web Platform - Demo</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #0b1220;
+    --card: #121b2e;
+    --accent: #4f8cff;
+    --text: #e6ecf5;
+    --muted: #93a2bd;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 2.5rem 3rem;
+    max-width: 560px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  h1 { margin-top: 0; font-size: 1.6rem; }
+  .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  ul { color: var(--muted); line-height: 1.8; padding-left: 1.2rem; }
+  code {
+    background: rgba(255,255,255,0.08);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <span class="badge">LIVE DEMO</span>
+    <h1>Secure AKS Web Platform</h1>
+    <p>This static page is served from a container built and pushed to
+      <strong>Azure Container Registry</strong> by GitHub Actions, deployed to a
+      <strong>private Azure Kubernetes Service</strong> cluster, and exposed to the
+      Internet through an <strong>Application Gateway (WAF_v2)</strong> ingress.</p>
+    <ul>
+      <li>No public AKS API server</li>
+      <li>No ACR admin credentials - image pulls use the node's managed identity</li>
+      <li>GitHub Actions authenticates to Azure via OIDC - no stored secrets</li>
+      <li>Runs as a non-root user with a read-only root filesystem</li>
+    </ul>
+    <p><code>namespace: demo-web</code></p>
+  </div>
+</body>
+</html>
