@@ -336,7 +336,41 @@ resource keyVaultCertUserAssignment 'Microsoft.Authorization/roleAssignments@202
 }
 
 // =========================================================================
-// 8. Diagnostic settings -> existing Log Analytics Workspace
+// 8. RBAC: AGIC add-on identity -> Contributor on the Application Gateway +
+//    Reader on this resource group. Bring-your-own-gateway mode (passing an
+//    existing applicationGatewayId, as this template does) does NOT
+//    auto-grant this the way some `az aks` CLI flows do - without it, the
+//    AGIC pod CrashLoopBackOffs with 403 AuthorizationFailed trying to read
+//    the gateway.
+// =========================================================================
+resource appGatewayRef 'Microsoft.Network/applicationGateways@2023-09-01' existing = {
+  name: appGatewayName
+}
+
+resource agicContributorOnAppGw 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(appGatewayRef.id, aksName, 'Contributor-AGIC')
+  scope: appGatewayRef
+  properties: {
+    principalId: aks.outputs.ingressApplicationGatewayIdentityObjectId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c') // Contributor
+    description: 'Allows the AGIC add-on to manage listeners/backend pools/rules on the webplat Application Gateway based on Kubernetes Ingress objects.'
+  }
+}
+
+resource agicReaderOnRg 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, aksName, 'Reader-AGIC')
+  scope: resourceGroup()
+  properties: {
+    principalId: aks.outputs.ingressApplicationGatewayIdentityObjectId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7') // Reader
+    description: 'Allows the AGIC add-on to discover the webplat Application Gateway resource within this resource group.'
+  }
+}
+
+// =========================================================================
+// 9. Diagnostic settings -> existing Log Analytics Workspace
 // =========================================================================
 module diagAks '../modules/diagnostic-settings.bicep' = {
   name: 'deploy-diag-aks'

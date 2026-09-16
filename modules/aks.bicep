@@ -220,3 +220,6 @@ output keyVaultSecretsProviderIdentityObjectId string = aks.properties.addonProf
 
 @description('OIDC issuer URL, for future workload-identity federated credentials.')
 output oidcIssuerUrl string = aks.properties.oidcIssuerProfile.issuerURL
+
+@description('Object (principal) ID of the ingressApplicationGateway (AGIC) add-on identity - grant this Contributor on the Application Gateway and Reader on its resource group, since bring-your-own-gateway mode does not auto-grant RBAC the way some `az aks` CLI flows do.')
+output ingressApplicationGatewayIdentityObjectId string = aks.properties.addonProfiles.ingressApplicationGateway.identity.objectId
