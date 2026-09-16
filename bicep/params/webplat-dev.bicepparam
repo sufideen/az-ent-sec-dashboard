@@ -22,8 +22,8 @@ param appGwSubnetPrefix = '10.30.16.0/24'
 param peSubnetPrefix = '10.30.17.0/24'
 
 param kubernetesVersion = '1.36.3'
-param systemNodeVmSize = 'Standard_D2s_v5'
-param userNodeVmSize = 'Standard_D2s_v5'
+param systemNodeVmSize = 'Standard_D2s_v4'
+param userNodeVmSize = 'Standard_D2s_v4'
 param systemNodeCount = 2
 param userNodeMinCount = 1
 param userNodeMaxCount = 3

@@ -105,10 +105,10 @@ param peSubnetPrefix string = '10.30.17.0/24'
 param kubernetesVersion string = '1.36.3'
 
 @description('VM size for the system node pool.')
-param systemNodeVmSize string = 'Standard_D2s_v5'
+param systemNodeVmSize string = 'Standard_D2s_v4'
 
 @description('VM size for the user (workload) node pool.')
-param userNodeVmSize string = 'Standard_D2s_v5'
+param userNodeVmSize string = 'Standard_D2s_v4'
 
 @description('Node count for the system pool.')
 param systemNodeCount int = (environmentName == 'prod') ? 3 : 2

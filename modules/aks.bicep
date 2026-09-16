@@ -37,10 +37,10 @@ param kubernetesVersion string
 param aksSubnetId string
 
 @description('VM size for the system node pool.')
-param systemNodeVmSize string = 'Standard_D2s_v5'
+param systemNodeVmSize string = 'Standard_D2s_v4'
 
 @description('VM size for the user (workload) node pool.')
-param userNodeVmSize string = 'Standard_D2s_v5'
+param userNodeVmSize string = 'Standard_D2s_v4'
 
 @description('Node count for the system pool.')
 param systemNodeCount int
