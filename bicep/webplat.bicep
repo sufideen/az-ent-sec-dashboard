@@ -170,6 +170,67 @@ module keyVault '../modules/key-vault.bicep' = {
   }
 }
 
+// Private endpoint for the Key Vault - publicNetworkAccessEnabled is false
+// above, so without this the vault is unreachable by anything, including
+// the AKS Key Vault Secrets Provider add-on that needs to read the TLS cert.
+resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: 'privatelink.vaultcore.azure.net'
+  location: 'global'
+  tags: tags
+}
+
+resource keyVaultPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: keyVaultPrivateDnsZone
+  name: '${vnetName}-kv-link'
+  location: 'global'
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: network.outputs.vnetId
+    }
+  }
+}
+
+resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-09-01' = {
+  name: 'pe-${keyVaultName}'
+  location: location
+  tags: tags
+  properties: {
+    subnet: {
+      id: network.outputs.peSubnetId
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'pe-${keyVaultName}-connection'
+        properties: {
+          privateLinkServiceId: keyVaultRef.id
+          groupIds: [
+            'vault'
+          ]
+        }
+      }
+    ]
+  }
+  dependsOn: [
+    keyVault
+  ]
+}
+
+resource keyVaultPrivateEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-09-01' = {
+  parent: keyVaultPrivateEndpoint
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'privatelink-vaultcore-azure-net'
+        properties: {
+          privateDnsZoneId: keyVaultPrivateDnsZone.id
+        }
+      }
+    ]
+  }
+}
+
 // =========================================================================
 // 3. Application Gateway (WAF_v2 shell - AGIC manages listeners/rules)
 // =========================================================================
@@ -275,7 +336,65 @@ resource keyVaultCertUserAssignment 'Microsoft.Authorization/roleAssignments@202
 }
 
 // =========================================================================
-// 8. Diagnostic settings -> existing Log Analytics Workspace
+// 8. RBAC: AGIC add-on identity -> Contributor on the Application Gateway +
+//    Reader on this resource group. Bring-your-own-gateway mode (passing an
+//    existing applicationGatewayId, as this template does) does NOT
+//    auto-grant this the way some `az aks` CLI flows do - without it, the
+//    AGIC pod CrashLoopBackOffs with 403 AuthorizationFailed trying to read
+//    the gateway.
+// =========================================================================
+resource appGatewayRef 'Microsoft.Network/applicationGateways@2023-09-01' existing = {
+  name: appGatewayName
+}
+
+resource agicContributorOnAppGw 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(appGatewayRef.id, aksName, 'Contributor-AGIC')
+  scope: appGatewayRef
+  properties: {
+    principalId: aks.outputs.ingressApplicationGatewayIdentityObjectId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c') // Contributor
+    description: 'Allows the AGIC add-on to manage listeners/backend pools/rules on the webplat Application Gateway based on Kubernetes Ingress objects.'
+  }
+}
+
+resource agicReaderOnRg 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, aksName, 'Reader-AGIC')
+  scope: resourceGroup()
+  properties: {
+    principalId: aks.outputs.ingressApplicationGatewayIdentityObjectId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7') // Reader
+    description: 'Allows the AGIC add-on to discover the webplat Application Gateway resource within this resource group.'
+  }
+}
+
+// Contributor on the gateway resource does NOT include permission to join
+// its subnet (the subnet is a child of the VNet, a different resource) -
+// AGIC's CreateOrUpdate PUT fails with ApplicationGatewayInsufficientPermissionOnSubnet
+// without this, confirmed by a real deployment failure.
+resource vnetRef 'Microsoft.Network/virtualNetworks@2023-09-01' existing = {
+  name: vnetName
+}
+
+resource appGwSubnetRef 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' existing = {
+  parent: vnetRef
+  name: 'snet-appgw'
+}
+
+resource agicNetworkContributorOnSubnet 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(appGwSubnetRef.id, aksName, 'NetworkContributor-AGIC')
+  scope: appGwSubnetRef
+  properties: {
+    principalId: aks.outputs.ingressApplicationGatewayIdentityObjectId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4d97b98b-1d4f-4787-a291-c67834d212e7') // Network Contributor
+    description: 'Allows the AGIC add-on to join the Application Gateway subnet - required for CreateOrUpdate on the gateway, separate from Contributor on the gateway resource itself.'
+  }
+}
+
+// =========================================================================
+// 9. Diagnostic settings -> existing Log Analytics Workspace
 // =========================================================================
 module diagAks '../modules/diagnostic-settings.bicep' = {
   name: 'deploy-diag-aks'

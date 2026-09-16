@@ -2,7 +2,7 @@ name: Bicep Lint
 
 on:
   pull_request:
-    branches: [main]
+    branches: [claude/azure-security-ops-platform-44dc1t]
     paths:
       - 'bicep/**'
       - 'modules/**'
@@ -10,7 +10,7 @@ on:
       - '.github/workflows/bicep-lint.yml'
       - 'pipelines/github/bicep-lint.yml'
   push:
-    branches: [main]
+    branches: [claude/azure-security-ops-platform-44dc1t]
     paths:
       - 'bicep/**'
       - 'modules/**'

@@ -47,7 +47,13 @@ Resource groups: `rg-itsolutions-webplat-dev-uks-001`,
 - **No public AKS API server** — `apiServerAccessProfile.enablePrivateCluster: true`,
   AKS-managed private DNS zone.
 - **No ACR admin user** — nodes pull images via the AKS kubelet's managed
-  identity, granted `AcrPull` scoped to the registry only.
+  identity, granted `AcrPull` scoped to the registry only. ACR's public
+  network access is enabled (default-deny network rule set) because
+  GitHub-hosted Actions runners push from outside this VNet and have no
+  fixed IP range to allow-list; AKS's own pulls still use the private
+  endpoint/DNS zone. Push/pull is gated entirely by Entra ID + RBAC either
+  way - a self-hosted, VNet-joined runner (see Deferred) would allow going
+  fully private.
 - **Entra ID + Azure RBAC for Kubernetes authorization** — cluster access is
   an Entra ID group membership (`aksAdminsGroupObjectId`), not a static
   kubeconfig or client certificate. `disableLocalAccounts: true`.
@@ -189,7 +195,15 @@ offboarding an administrator is a group-membership change — no redeploy.
    — only `privateFQDN` is populated.
 4. `az aks command invoke -g <rg> -n <cluster> --command "kubectl get nodes -o wide"`
    returns `Ready` nodes.
-5. `az aks command invoke ... --command "kubectl apply -k ." --file-path k8s/overlays/dev`
+5. Render the manifests locally first, then ship the single rendered file -
+   `az aks command invoke` flattens every `--file` into one directory by
+   basename (no subfolders preserved), which breaks a base+overlay
+   kustomize layout outright (both `kustomization.yaml` files collide) and
+   also rejects a bare directory in some CLI versions:
+   ```bash
+   kubectl kustomize k8s/overlays/dev > /tmp/rendered.yaml
+   az aks command invoke ... --command "kubectl apply -f rendered.yaml" --file /tmp/rendered.yaml
+   ```
    then `kubectl -n demo-web get pods` shows `Running` pods passing readiness.
 6. `kubectl describe pod <pod>` shows no `ImagePullBackOff`; the ACR
    diagnostic logs in the shared Log Analytics Workspace show a `Pull`

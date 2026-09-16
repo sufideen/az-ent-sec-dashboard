@@ -24,10 +24,16 @@ spec:
   policyTypes:
     - Ingress
   ingress:
+    # Bring-your-own-gateway AGIC: the Application Gateway itself (not a
+    # cluster pod) sends health probes and proxied requests directly to pod
+    # IPs, sourced from its own subnet - each overlay patches the CIDR below
+    # to that environment's App Gateway subnet. Without this, probes time
+    # out and the backend pool shows Unhealthy even though the pods are
+    # Ready (confirmed by a real deployment: kube-system namespaceSelector
+    # alone never matches this traffic since it isn't pod-sourced).
     - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
+        - ipBlock:
+            cidr: 0.0.0.0/32
       ports:
         - protocol: TCP
           port: 8080

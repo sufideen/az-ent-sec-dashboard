@@ -32,3 +32,10 @@ patches:
       - op: replace
         path: /spec/tls/0/hosts/0
         value: www.itsolutions.example.com
+  - target:
+      kind: NetworkPolicy
+      name: demo-web-allow-ingress-from-agic
+    patch: |-
+      - op: replace
+        path: /spec/ingress/0/from/0/ipBlock/cidr
+        value: 10.31.16.0/24

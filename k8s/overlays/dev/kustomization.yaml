@@ -5,8 +5,8 @@ resources:
   - ../../base
 images:
   - name: demo-web
-    newName: REPLACE_WITH_ACR_LOGIN_SERVER/demo-web
-    newTag: REPLACE_WITH_IMAGE_TAG
+    newName: acritsolutionswebplatdev001.azurecr.io/demo-web
+    newTag: latest
 patches:
   - target:
       kind: Deployment
@@ -25,3 +25,23 @@ patches:
       - op: replace
         path: /spec/tls/0/hosts/0
         value: dev.webplat.itsolutions.example.com
+  - target:
+      kind: NetworkPolicy
+      name: demo-web-allow-ingress-from-agic
+    patch: |-
+      - op: replace
+        path: /spec/ingress/0/from/0/ipBlock/cidr
+        value: 10.30.16.0/24
+  - target:
+      kind: SecretProviderClass
+      name: webplat-tls
+    patch: |-
+      - op: replace
+        path: /spec/parameters/userAssignedIdentityID
+        value: 9dd4c91c-7963-434b-9f80-805856a718d2
+      - op: replace
+        path: /spec/parameters/keyvaultName
+        value: kvwebplatdev3r4cvt3hsiof
+      - op: replace
+        path: /spec/parameters/tenantId
+        value: fc1d277f-2fcb-4721-b141-1e117c362266

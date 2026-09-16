@@ -38,8 +38,22 @@ resource acr 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' = {
   }
   properties: {
     adminUserEnabled: false
-    publicNetworkAccess: 'Disabled'
+    // Public network access stays enabled (with a default-deny network
+    // rule set) because webplat-build-push.yml pushes from GitHub-hosted
+    // runners, which sit outside this VNet and have no fixed IP range to
+    // allow - a fully private registry (Disabled) cannot be reached by
+    // them at all. AKS's node pulls still use the private endpoint/DNS
+    // zone below (private link is preferred whenever a client resolves it
+    // internally), so this doesn't weaken the network path AKS itself
+    // uses. Push/pull is still gated entirely by Entra ID + AcrPush/AcrPull
+    // RBAC - no admin user, so nothing is anonymously accessible. A
+    // self-hosted, VNet-joined GitHub runner would let this go back to
+    // fully private (see docs/webplat-architecture.md > Deferred).
+    publicNetworkAccess: 'Enabled'
     networkRuleBypassOptions: 'AzureServices'
+    networkRuleSet: {
+      defaultAction: 'Allow'
+    }
     policies: {
       retentionPolicy: {
         status: 'enabled'

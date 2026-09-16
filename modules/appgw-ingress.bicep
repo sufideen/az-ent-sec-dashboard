@@ -80,6 +80,12 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-09-01' = {
     firewallPolicy: {
       id: wafPolicy.id
     }
+    // Explicit strict policy - min TLS 1.2, no legacy ciphers - since the
+    // gateway's default policy would otherwise permit TLS 1.0/1.1.
+    sslPolicy: {
+      policyType: 'Predefined'
+      policyName: 'AppGwSslPolicy20220101S'
+    }
     gatewayIPConfigurations: [
       {
         name: 'appGatewayIpConfig'

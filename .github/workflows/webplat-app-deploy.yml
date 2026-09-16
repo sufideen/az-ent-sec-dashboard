@@ -34,13 +34,15 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID_WEBPLAT }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - name: kubectl apply -k (dev) via command invoke
+      - name: Render manifests (kustomize build - avoids command invoke's flat --file limitation)
+        run: kubectl kustomize k8s/overlays/dev > /tmp/rendered-dev.yaml
+      - name: kubectl apply (dev) via command invoke
         run: |
           az aks command invoke \
             -g ${{ vars.RESOURCE_GROUP_DEV_WEBPLAT }} \
             -n ${{ vars.AKS_NAME_DEV }} \
-            --command "kubectl apply -k ." \
-            --file-path k8s/overlays/dev
+            --command "kubectl apply -f rendered-dev.yaml" \
+            --file /tmp/rendered-dev.yaml
       - name: Wait for rollout
         run: |
           az aks command invoke \
@@ -61,13 +63,15 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID_WEBPLAT }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - name: kubectl apply -k (prod) via command invoke
+      - name: Render manifests (kustomize build - avoids command invoke's flat --file limitation)
+        run: kubectl kustomize k8s/overlays/prod > /tmp/rendered-prod.yaml
+      - name: kubectl apply (prod) via command invoke
         run: |
           az aks command invoke \
             -g ${{ vars.RESOURCE_GROUP_PROD_WEBPLAT }} \
             -n ${{ vars.AKS_NAME_PROD }} \
-            --command "kubectl apply -k ." \
-            --file-path k8s/overlays/prod
+            --command "kubectl apply -f rendered-prod.yaml" \
+            --file /tmp/rendered-prod.yaml
       - name: Wait for rollout
         run: |
           az aks command invoke \

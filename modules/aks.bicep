@@ -84,6 +84,10 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-11-01' = {
     apiServerAccessProfile: {
       enablePrivateCluster: true
       privateDNSZone: 'system'
+      // Without this, AKS still publishes a public DNS record for the
+      // cluster (resolving to the private IP, so not actually reachable
+      // from the internet - but an unnecessary public DNS footprint).
+      enablePrivateClusterPublicFQDN: false
     }
     agentPoolProfiles: [
       {
@@ -101,9 +105,17 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-11-01' = {
         maxPods: 30
       }
     ]
+    // Standard (flat) Azure CNI, NOT Overlay: AGIC requires pod IPs to be
+    // real, routable VNet addresses so the Application Gateway (which lives
+    // in its own VNet subnet, outside the cluster's overlay network) can
+    // reach them directly for its backend pool. Confirmed by a real 502
+    // Bad Gateway - Overlay mode's pod IPs are unreachable from the gateway
+    // subnet. This is a documented AGIC limitation, not a config option.
+    // The larger IP consumption this requires is already accounted for -
+    // snet-aks is sized /20 (4096 addresses), comfortably covering up to 5
+    // nodes x maxPods 30 plus node IPs.
     networkProfile: {
       networkPlugin: 'azure'
-      networkPluginMode: 'overlay'
       networkPolicy: 'azure'
       loadBalancerSku: 'standard'
       outboundType: 'loadBalancer'
@@ -216,3 +228,6 @@ output keyVaultSecretsProviderIdentityObjectId string = aks.properties.addonProf
 
 @description('OIDC issuer URL, for future workload-identity federated credentials.')
 output oidcIssuerUrl string = aks.properties.oidcIssuerProfile.issuerURL
+
+@description('Object (principal) ID of the ingressApplicationGateway (AGIC) add-on identity - grant this Contributor on the Application Gateway and Reader on its resource group, since bring-your-own-gateway mode does not auto-grant RBAC the way some `az aks` CLI flows do.')
+output ingressApplicationGatewayIdentityObjectId string = aks.properties.addonProfiles.ingressApplicationGateway.identity.objectId
