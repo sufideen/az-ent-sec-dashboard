@@ -91,7 +91,9 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-11-01' = {
         osSKU: 'AzureLinux'
         type: 'VirtualMachineScaleSets'
         vnetSubnetID: aksSubnetId
-        onlyCriticalAddonsTaint: true
+        nodeTaints: [
+          'CriticalAddonsOnly=true:NoSchedule'
+        ]
         maxPods: 30
       }
     ]
@@ -155,7 +157,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-11-01' = {
   }
 }
 
-// Workloads never land on the system pool (onlyCriticalAddonsTaint above) -
+// Workloads never land on the system pool (CriticalAddonsOnly taint above) -
 // the demo web app (and anything else) is scheduled onto this pool instead.
 resource userPool 'Microsoft.ContainerService/managedClusters/agentPools@2023-11-01' = {
   parent: aks
