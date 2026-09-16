@@ -24,7 +24,7 @@ param aksSubnetPrefix = '10.31.0.0/20'
 param appGwSubnetPrefix = '10.31.16.0/24'
 param peSubnetPrefix = '10.31.17.0/24'
 
-param kubernetesVersion = '1.29.7'
+param kubernetesVersion = '1.36.3'
 param systemNodeVmSize = 'Standard_D2s_v5'
 param userNodeVmSize = 'Standard_D2s_v5'
 param systemNodeCount = 3
