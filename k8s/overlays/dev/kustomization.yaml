@@ -5,8 +5,8 @@ resources:
   - ../../base
 images:
   - name: demo-web
-    newName: REPLACE_WITH_ACR_LOGIN_SERVER/demo-web
-    newTag: REPLACE_WITH_IMAGE_TAG
+    newName: acritsolutionswebplatdev001.azurecr.io/demo-web
+    newTag: latest
 patches:
   - target:
       kind: Deployment
@@ -25,3 +25,16 @@ patches:
       - op: replace
         path: /spec/tls/0/hosts/0
         value: dev.webplat.itsolutions.example.com
+  - target:
+      kind: SecretProviderClass
+      name: webplat-tls
+    patch: |-
+      - op: replace
+        path: /spec/parameters/userAssignedIdentityID
+        value: 7be5bb70-94c3-4269-97b2-f879173c10c2
+      - op: replace
+        path: /spec/parameters/keyvaultName
+        value: kvwebplatdev3r4cvt3hsiof
+      - op: replace
+        path: /spec/parameters/tenantId
+        value: fc1d277f-2fcb-4721-b141-1e117c362266
