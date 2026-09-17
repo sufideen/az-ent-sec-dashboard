@@ -192,10 +192,33 @@ resource userPool 'Microsoft.ContainerService/managedClusters/agentPools@2023-11
   }
 }
 
-// Weekly patch/node-image auto-upgrade maintenance window (Sun 02:00-06:00 UTC).
+// Weekly Kubernetes version auto-upgrade maintenance window (Sun 02:00-06:00 UTC).
 resource maintenanceConfig 'Microsoft.ContainerService/managedClusters/maintenanceConfigurations@2023-11-01' = {
   parent: aks
   name: 'aksManagedAutoUpgradeSchedule'
+  properties: {
+    maintenanceWindow: {
+      schedule: {
+        weekly: {
+          intervalWeeks: 1
+          dayOfWeek: 'Sunday'
+        }
+      }
+      durationHours: 4
+      utcOffset: '+00:00'
+      startTime: '02:00'
+    }
+  }
+}
+
+// Weekly node OS image auto-upgrade maintenance window (Sun 02:00-06:00 UTC).
+// This is a separate config from aksManagedAutoUpgradeSchedule above - that
+// one only covers Kubernetes version upgrades (autoUpgradeProfile.upgradeChannel);
+// nodeOSUpgradeChannel upgrades are scheduled independently and silently
+// fall back to AKS's own default cadence without this resource.
+resource nodeOsMaintenanceConfig 'Microsoft.ContainerService/managedClusters/maintenanceConfigurations@2023-11-01' = {
+  parent: aks
+  name: 'aksManagedNodeOSUpgradeSchedule'
   properties: {
     maintenanceWindow: {
       schedule: {
@@ -225,6 +248,9 @@ output kubeletIdentityObjectId string = aks.properties.identityProfile.kubeletid
 
 @description('Object (principal) ID of the Key Vault Secrets Provider add-on identity - grant this read access on the Key Vault for TLS delivery.')
 output keyVaultSecretsProviderIdentityObjectId string = aks.properties.addonProfiles.azureKeyvaultSecretsProvider.identity.objectId
+
+@description('Client ID of the Key Vault Secrets Provider add-on identity - this is the value SecretProviderClass.spec.parameters.userAssignedIdentityID needs, not the object ID above.')
+output keyVaultSecretsProviderIdentityClientId string = aks.properties.addonProfiles.azureKeyvaultSecretsProvider.identity.clientId
 
 @description('OIDC issuer URL, for future workload-identity federated credentials.')
 output oidcIssuerUrl string = aks.properties.oidcIssuerProfile.issuerURL

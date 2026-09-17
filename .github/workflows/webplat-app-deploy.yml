@@ -24,16 +24,24 @@ permissions:
 jobs:
   deploy-dev:
     name: Deploy app - Dev
-    if: ${{ github.event.inputs.environment == '' || github.event.inputs.environment == 'dev' }}
+    if: ${{ (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') && (github.event.inputs.environment == '' || github.event.inputs.environment == 'dev') }}
     runs-on: ubuntu-latest
     environment: dev
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID_WEBPLAT }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Set image reference
+        run: |
+          sed -i \
+            -e "s#REPLACE_WITH_ACR_LOGIN_SERVER#${{ vars.ACR_NAME_DEV }}.azurecr.io#g" \
+            -e "s#REPLACE_WITH_IMAGE_TAG#${{ github.event.workflow_run.head_sha || github.sha }}#g" \
+            k8s/overlays/dev/kustomization.yaml
       - name: Render manifests (kustomize build - avoids command invoke's flat --file limitation)
         run: kubectl kustomize k8s/overlays/dev > /tmp/rendered-dev.yaml
       - name: kubectl apply (dev) via command invoke
@@ -53,16 +61,24 @@ jobs:
   deploy-prod:
     name: Deploy app - Prod
     needs: deploy-dev
-    if: ${{ always() && (needs.deploy-dev.result == 'success' || needs.deploy-dev.result == 'skipped') && (github.event.inputs.environment == '' || github.event.inputs.environment == 'prod') }}
+    if: ${{ always() && (needs.deploy-dev.result == 'success' || needs.deploy-dev.result == 'skipped') && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') && (github.event.inputs.environment == '' || github.event.inputs.environment == 'prod') }}
     runs-on: ubuntu-latest
     environment: production
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID_WEBPLAT }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Set image reference
+        run: |
+          sed -i \
+            -e "s#REPLACE_WITH_ACR_LOGIN_SERVER#${{ vars.ACR_NAME_PROD }}.azurecr.io#g" \
+            -e "s#REPLACE_WITH_IMAGE_TAG#${{ github.event.workflow_run.head_sha || github.sha }}#g" \
+            k8s/overlays/prod/kustomization.yaml
       - name: Render manifests (kustomize build - avoids command invoke's flat --file limitation)
         run: kubectl kustomize k8s/overlays/prod > /tmp/rendered-prod.yaml
       - name: kubectl apply (prod) via command invoke
