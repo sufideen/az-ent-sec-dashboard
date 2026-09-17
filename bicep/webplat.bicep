@@ -445,3 +445,5 @@ output acrName string = acr.outputs.acrName
 output acrLoginServer string = acr.outputs.loginServer
 output appGatewayPublicIp string = appGwIngress.outputs.publicIpAddress
 output keyVaultName string = keyVault.outputs.keyVaultName
+@description('Client ID of the Key Vault Secrets Provider add-on identity. Use this for SecretProviderClass.spec.parameters.userAssignedIdentityID - it is a different value from the object ID used above for the RBAC role assignment.')
+output keyVaultSecretsProviderIdentityClientId string = aks.outputs.keyVaultSecretsProviderIdentityClientId

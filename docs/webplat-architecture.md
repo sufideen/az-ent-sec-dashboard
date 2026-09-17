@@ -48,10 +48,12 @@ Resource groups: `rg-itsolutions-webplat-dev-uks-001`,
   AKS-managed private DNS zone.
 - **No ACR admin user** — nodes pull images via the AKS kubelet's managed
   identity, granted `AcrPull` scoped to the registry only. ACR's public
-  network access is enabled (default-deny network rule set) because
-  GitHub-hosted Actions runners push from outside this VNet and have no
-  fixed IP range to allow-list; AKS's own pulls still use the private
-  endpoint/DNS zone. Push/pull is gated entirely by Entra ID + RBAC either
+  network access is enabled with a default-allow network rule set (no IP
+  allowlist) because GitHub-hosted Actions runners push from outside this
+  VNet and have no fixed IP range to allow-list; AKS's own pulls still use
+  the private endpoint/DNS zone. The registry is public-reachable but
+  identity-gated, not network-gated — push/pull is gated entirely by Entra
+  ID + RBAC either
   way - a self-hosted, VNet-joined runner (see Deferred) would allow going
   fully private.
 - **Entra ID + Azure RBAC for Kubernetes authorization** — cluster access is
@@ -131,10 +133,11 @@ k8s/overlays/{dev,prod}/             # per-environment image tag, replicas, host
    (Self-signed by default — swap for a real CA cert later via the same
    command with a custom policy; no redeploy needed.)
 7. **Fill in the placeholders** in `k8s/base/secretproviderclass.yaml`
-   (`userAssignedIdentityID` = the AKS Key Vault Secrets Provider add-on's
-   client ID, from the `webplat.bicep` deployment's `aks` module output;
-   `keyvaultName`, `tenantId`) and the hostnames in
-   `k8s/overlays/{dev,prod}/kustomization.yaml`.
+   (`userAssignedIdentityID` = the `keyVaultSecretsProviderIdentityClientId`
+   deployment output of `bicep/webplat.bicep` — this is the add-on's
+   **client ID**, a different value from the object ID used internally for
+   the Key Vault role assignment; `keyvaultName`, `tenantId`) and the
+   hostnames in `k8s/overlays/{dev,prod}/kustomization.yaml`.
 8. **Build and deploy the app** — pushing to `app/**` on `main` runs
    `webplat-build-push.yml`, which triggers `webplat-app-deploy.yml`.
 

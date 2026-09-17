@@ -1,8 +1,10 @@
 // ============================================================================
 // Module: network.bicep
 // Purpose: VNet + 3 subnets for the secure AKS web platform:
-//   - snet-aks   : AKS nodes (Azure CNI Overlay - pod IPs come from an
-//                  overlay range, not this subnet, so it stays small)
+//   - snet-aks   : AKS nodes AND pods (standard/flat Azure CNI, not Overlay -
+//                  AGIC requires pod IPs to be real, routable VNet addresses,
+//                  so this subnet must be sized for nodes + pods, not just
+//                  nodes; sized /20 to comfortably cover both)
 //   - snet-appgw : dedicated subnet required by Application Gateway
 //   - snet-pe    : private endpoints (ACR)
 // Each subnet gets its own NSG. Only the App Gateway subnet is reachable from

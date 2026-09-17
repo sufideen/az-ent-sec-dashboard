@@ -5,8 +5,10 @@ resources:
   - ../../base
 images:
   - name: demo-web
-    newName: acritsolutionswebplatdev001.azurecr.io/demo-web
-    newTag: latest
+    # Substituted by webplat-app-deploy.yml at deploy time (sed) with the
+    # real ACR login server and the git SHA that was just built and pushed.
+    newName: REPLACE_WITH_ACR_LOGIN_SERVER/demo-web
+    newTag: REPLACE_WITH_IMAGE_TAG
 patches:
   - target:
       kind: Deployment
@@ -21,10 +23,10 @@ patches:
     patch: |-
       - op: replace
         path: /spec/rules/0/host
-        value: dev.webplat.itsolutions.example.com
+        value: dev-webplat.ict-cloud.solutions
       - op: replace
         path: /spec/tls/0/hosts/0
-        value: dev.webplat.itsolutions.example.com
+        value: dev-webplat.ict-cloud.solutions
   - target:
       kind: NetworkPolicy
       name: demo-web-allow-ingress-from-agic

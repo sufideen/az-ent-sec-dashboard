@@ -5,6 +5,8 @@ resources:
   - ../../base
 images:
   - name: demo-web
+    # Substituted by webplat-app-deploy.yml at deploy time (sed) with the
+    # real ACR login server and the git SHA that was just built and pushed.
     newName: REPLACE_WITH_ACR_LOGIN_SERVER/demo-web
     newTag: REPLACE_WITH_IMAGE_TAG
 patches:
