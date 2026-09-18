@@ -8,6 +8,12 @@ template — but reuses its CAF naming convention and its existing Log
 Analytics Workspace, so AKS/ACR show up as two more monitored resource types
 in the same Sentinel/SOC pipeline the rest of this repo already reports on.
 
+This document is the module-by-module Bicep reference and build history.
+For the architecture rationale and diagrams, see
+[`hld-webplat.md`](hld-webplat.md); for day-2 operations and a
+troubleshooting playbook, see
+[`lld-webplat-operations.md`](lld-webplat-operations.md).
+
 ## Architecture
 
 ```

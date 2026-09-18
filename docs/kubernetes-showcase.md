@@ -10,6 +10,8 @@ Live, currently-running evidence lives in
 links back to a real screenshot or command output, not a diagram alone.
 
 - **Repo**: this repository, `bicep/webplat.bicep` + `modules/{network,acr,aks,appgw-ingress}.bicep` + `k8s/`
+- **High-Level Design** (architect audience, SVG diagrams): [`hld-webplat.md`](hld-webplat.md)
+- **Low-Level Design** (Azure admin/support audience, troubleshooting playbook): [`lld-webplat-operations.md`](lld-webplat-operations.md)
 - **Full technical runbook**: [`webplat-architecture.md`](webplat-architecture.md)
 - **Live incident write-up**: [Incident: prod SecretProviderClass never patched](webplat-architecture.md#incident-prod-secretproviderclass-never-patched)
 

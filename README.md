@@ -53,6 +53,16 @@ use cases, real incident, evidence, and a
 [slide deck](docs/webplat-kubernetes-showcase.pptx)) built for a technical
 reviewer who wants the story, not just the file tree.
 
+**Design documentation**, split by audience:
+- [`docs/hld-webplat.md`](docs/hld-webplat.md) — High-Level Design for
+  architects/reviewers: system context, logical and network architecture
+  (with [SVG diagrams](docs/diagrams/)), key design decisions and
+  trade-offs, non-functional requirements
+- [`docs/lld-webplat-operations.md`](docs/lld-webplat-operations.md) —
+  Low-Level Design for the Azure admin/support team: exact resource
+  inventory, the identity/RBAC matrix, day-2 procedures, and a
+  troubleshooting playbook built from real incidents on this platform
+
 **Status**: both dev (`rg-itsolutions-webplat-dev-uks-001`) and prod
 (`rg-itsolutions-webplat-prod-uks-001`) are deployed and verified
 end-to-end — nodes `Ready`, `demo-web` pods `Running`, App Gateway backend

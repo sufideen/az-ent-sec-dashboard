@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 430" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <marker id="arrow3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1E2761"/>
+    </marker>
+  </defs>
+  <rect width="1100" height="430" fill="#FFFFFF"/>
+  <text x="550" y="34" text-anchor="middle" font-size="22" font-weight="bold" fill="#1A1A2E">CI/CD Data Flow — git push to running pod</text>
+  <text x="550" y="56" text-anchor="middle" font-size="13" fill="#5C6B8A">Every arrow crossing an Azure boundary authenticates via OIDC federation — no stored secret, anywhere</text>
+
+  <!-- 5 stage boxes -->
+  <!-- stage 1 -->
+  <rect x="40" y="120" width="180" height="130" rx="8" fill="#1E2761"/>
+  <text x="130" y="150" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF">1. Push</text>
+  <text x="130" y="172" text-anchor="middle" font-size="9.5" fill="#CADCFC">webplat-bicep-lint.yml</text>
+  <text x="130" y="188" text-anchor="middle" font-size="9.5" fill="#CADCFC">webplat-what-if.yml</text>
+  <text x="130" y="210" text-anchor="middle" font-size="9" fill="#00D9C0">PR comment: exact</text>
+  <text x="130" y="224" text-anchor="middle" font-size="9" fill="#00D9C0">resource-level diff</text>
+
+  <path d="M220,185 L260,185" stroke="#1E2761" stroke-width="2" fill="none" marker-end="url(#arrow3)"/>
+
+  <!-- stage 2 -->
+  <rect x="260" y="120" width="180" height="130" rx="8" fill="#1E2761"/>
+  <text x="350" y="150" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF">2. Build &amp; Push</text>
+  <text x="350" y="172" text-anchor="middle" font-size="9.5" fill="#CADCFC">webplat-build-push.yml</text>
+  <text x="350" y="190" text-anchor="middle" font-size="9" fill="#CADCFC">OIDC login → az acr login</text>
+  <text x="350" y="206" text-anchor="middle" font-size="9" fill="#CADCFC">docker build, tag = git SHA</text>
+  <text x="350" y="222" text-anchor="middle" font-size="9" fill="#CADCFC">push to ACR</text>
+
+  <path d="M440,185 L480,185" stroke="#1E2761" stroke-width="2" fill="none" marker-end="url(#arrow3)"/>
+
+  <!-- stage 3 -->
+  <rect x="480" y="120" width="180" height="130" rx="8" fill="#1E2761"/>
+  <text x="570" y="150" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF">3. Bicep Deploy</text>
+  <text x="570" y="172" text-anchor="middle" font-size="9.5" fill="#CADCFC">webplat-deploy.yml</text>
+  <text x="570" y="190" text-anchor="middle" font-size="9" fill="#CADCFC">dev: auto on merge</text>
+  <text x="570" y="206" text-anchor="middle" font-size="9" fill="#CADCFC">prod: environment</text>
+  <text x="570" y="222" text-anchor="middle" font-size="9" fill="#CADCFC">approval gate</text>
+
+  <path d="M660,185 L700,185" stroke="#1E2761" stroke-width="2" fill="none" marker-end="url(#arrow3)"/>
+
+  <!-- stage 4 -->
+  <rect x="700" y="120" width="180" height="130" rx="8" fill="#1E2761"/>
+  <text x="790" y="150" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF">4. App Deploy</text>
+  <text x="790" y="172" text-anchor="middle" font-size="9.5" fill="#CADCFC">webplat-app-deploy.yml</text>
+  <text x="790" y="190" text-anchor="middle" font-size="9" fill="#CADCFC">kustomize build + sed</text>
+  <text x="790" y="206" text-anchor="middle" font-size="9" fill="#CADCFC">image substitution</text>
+  <text x="790" y="222" text-anchor="middle" font-size="9" fill="#CADCFC">az aks command invoke</text>
+
+  <path d="M880,185 L920,185" stroke="#1E2761" stroke-width="2" fill="none" marker-end="url(#arrow3)"/>
+
+  <!-- stage 5 -->
+  <rect x="920" y="120" width="150" height="130" rx="8" fill="#00A896"/>
+  <text x="995" y="150" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF">5. AGIC</text>
+  <text x="995" y="172" text-anchor="middle" font-size="9.5" fill="#E7FFFA">reconciles</text>
+  <text x="995" y="192" text-anchor="middle" font-size="9" fill="#E7FFFA">Gateway listener +</text>
+  <text x="995" y="208" text-anchor="middle" font-size="9" fill="#E7FFFA">backend pool now</text>
+  <text x="995" y="224" text-anchor="middle" font-size="9" fill="#E7FFFA">match the Ingress</text>
+
+  <!-- callout box -->
+  <rect x="40" y="300" width="1030" height="100" rx="8" fill="#F4F7FE" stroke="#9AA7CE"/>
+  <text x="60" y="328" font-size="12.5" font-weight="bold" fill="#1A1A2E">Why step 4 uses "command invoke" instead of a direct kubectl connection</text>
+  <text x="60" y="350" font-size="11" fill="#5C6B8A">A GitHub-hosted runner has no network line-of-sight into the cluster — the API server has no public IP at all. "az aks command</text>
+  <text x="60" y="368" font-size="11" fill="#5C6B8A">invoke" executes kubectl inside the cluster's own control plane instead, over the Azure control-plane API — zero VPN, self-hosted</text>
+  <text x="60" y="386" font-size="11" fill="#5C6B8A">runner, or Bastion host required. The same mechanism is what an admin uses for manual operations (see LLD, section 4).</text>
+</svg>
