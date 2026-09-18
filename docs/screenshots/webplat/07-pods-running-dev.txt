@@ -1,0 +1,4 @@
+NAME                        READY   STATUS    RESTARTS   AGE   IP           NODE                           NOMINATED NODE   READINESS GATES
+demo-web-576cf757f6-kpvr7   1/1     Running   0          27h   10.30.0.75   aks-user-10334405-vmss000000   <none>           <none>
+demo-web-576cf757f6-p6tcj   1/1     Running   0          27h   10.30.0.76   aks-user-10334405-vmss000000   <none>           <none>
+

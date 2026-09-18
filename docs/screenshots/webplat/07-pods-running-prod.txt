@@ -1,0 +1,4 @@
+NAME                       READY   STATUS    RESTARTS   AGE   IP            NODE                           NOMINATED NODE   READINESS GATES
+demo-web-ccc969478-8cmfs   1/1     Running   0          26m   10.31.0.103   aks-user-21263827-vmss000001   <none>           <none>
+demo-web-ccc969478-lmgm2   1/1     Running   0          26m   10.31.0.136   aks-user-21263827-vmss000000   <none>           <none>
+

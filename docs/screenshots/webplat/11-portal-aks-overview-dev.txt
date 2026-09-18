@@ -1,0 +1,3 @@
+Name                                 ProvisioningState    KubernetesVersion    PrivateFqdn                                                                                                  PowerState
+-----------------------------------  -------------------  -------------------  -----------------------------------------------------------------------------------------------------------  ------------
+aks-itsolutions-webplat-dev-uks-001  Succeeded            1.36.3               itsolutions-webplat-dev-uks-001-i2y17kqr.f5f71c24-0a52-47f2-850e-4945186fd87e.privatelink.uksouth.azmk8s.io  Running
