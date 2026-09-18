@@ -46,6 +46,13 @@ see [`docs/webplat-architecture.md`](docs/webplat-architecture.md) for the
 full design, administrator runbook, security checklist, and teardown
 procedure.
 
+**New to this project?** Start with
+[`docs/kubernetes-showcase.md`](docs/kubernetes-showcase.md) — a
+portfolio-oriented walkthrough (architecture, cluster breakdown, glossary,
+use cases, real incident, evidence, and a
+[slide deck](docs/webplat-kubernetes-showcase.pptx)) built for a technical
+reviewer who wants the story, not just the file tree.
+
 **Status**: both dev (`rg-itsolutions-webplat-dev-uks-001`) and prod
 (`rg-itsolutions-webplat-prod-uks-001`) are deployed and verified
 end-to-end — nodes `Ready`, `demo-web` pods `Running`, App Gateway backend
