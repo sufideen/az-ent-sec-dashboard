@@ -2,10 +2,15 @@
 
 This folder holds screenshots/output captured from the real webplat
 deployment (both `rg-itsolutions-webplat-dev-uks-001` and
-`rg-itsolutions-webplat-prod-uks-001` exist in Azure) as evidence the
-platform is actually up, not just that the Bicep compiles. Nothing here is
-synthetic. Browser chrome showing unrelated bookmarks/tabs (other client
-work) is redacted before committing — see the note at the bottom.
+`rg-itsolutions-webplat-prod-uks-001` exist in Azure, both fully verified
+end-to-end) as evidence the platform is actually up, not just that the
+Bicep compiles. Nothing here is synthetic. Browser chrome showing unrelated
+bookmarks/tabs (other client work) is redacted from screenshots before
+committing — see the note at the bottom.
+
+Prod needed a live fix to get here — see
+[Incident: prod SecretProviderClass never patched](../webplat-architecture.md#incident-prod-secretproviderclass-never-patched)
+for the full root cause and fix.
 
 ## Captured
 
@@ -18,34 +23,26 @@ work) is redacted before committing — see the note at the bottom.
 | `04-prod-private-dns-zone.png` | Prod's AKS-managed private DNS zone (`*.privatelink.uksouth.azmk8s.io`) — confirms the private API server, tagged `dataClassification: confidential` |
 | `05-prod-loadbalancer.png` | Prod's AKS-managed Standard Load Balancer with 2 backend pools and an outbound rule |
 | `06-prod-nodes-ready.png` | `kubectl get nodes` via `az aks command invoke` against the prod cluster: all 5 nodes (3 system + 2 user) `Ready`, `v1.36.3` — direct kubelet-level confirmation, not just VMSS instance health |
+| `07-pods-running-dev.txt` / `-prod.txt` | `demo-web` pods `Running` and passing readiness in both environments |
+| `08-appgw-backend-healthy-dev.txt` / `-prod.txt` | AGIC-wired Application Gateway backend pool `Healthy` for every pod IP, both environments |
+| `09-curl-https-200-dev.txt` / `-prod.txt` | End-to-end HTTPS ingress: `curl` returns `HTTP/1.1 200 OK` with the real app body, `/healthz` returns `ok`, both environments |
+| `11-portal-aks-overview-dev.txt` / `-prod.txt` | Cluster `provisioningState: Succeeded`, private FQDN only, `Running` power state, both environments |
+| `12-defender-inventory-dev.txt` / `-prod.txt` | Cluster confirmed in the subscription's Resource Graph, both environments |
 
-## Still outstanding
+Captured with [`../../scripts/capture-webplat-evidence.sh`](../../scripts/capture-webplat-evidence.sh)
+(`dev` and `prod`) — re-run it any time to refresh these `.txt` files; they
+need no redaction (plain terminal text, no browser chrome).
 
-These need cluster/CLI access to capture (portal alone doesn't show pod or
-HTTP-level state) and were only ever shown inline in the original chat
-session, never saved to disk. **If a teardown of dev/prod is imminent,
-capture these now** — they can't be recaptured once the resource groups are
-deleted.
+## Known gap
 
-Run [`../../scripts/capture-webplat-evidence.sh`](../../scripts/capture-webplat-evidence.sh)
-(`dev` or `prod`) to capture all of them in one pass — it writes the raw
-text output straight into this folder (`07-pods-running-<env>.txt`, etc.),
-which needs no redaction the way a screenshot would:
-
-```bash
-./scripts/capture-webplat-evidence.sh dev
-./scripts/capture-webplat-evidence.sh prod
-git add docs/screenshots/webplat/*.txt
-```
-
-| Filename | Evidence of | What the script runs |
-|---|---|---|
-| `07-pods-running-<env>.txt` | App pods scheduled and passing readiness | `kubectl -n demo-web get pods -o wide` via `az aks command invoke` |
-| `08-appgw-backend-healthy-<env>.txt` | AGIC wired the Application Gateway backend pool correctly (different resource from the Standard Load Balancer already captured) | `az network application-gateway show-backend-health` |
-| `09-curl-https-200-<env>.txt` | End-to-end HTTPS ingress serving the real app | `curl -kI` / `curl -k .../healthz` against the App Gateway's public IP (`--resolve`'d to the configured hostname, real or placeholder) |
-| `10-acr-pull-event-<env>.txt` | Kubelet identity pulling images with zero stored credentials (no admin user) | Log Analytics query against `ContainerRegistryLoginEvents` |
-| `11-portal-aks-overview-<env>.txt` | Cluster provisioning state, private API server, node pool status | `az aks show` |
-| `12-defender-inventory-<env>.txt` | Resource confirmed in the subscription's Resource Graph (a best-effort CLI proxy — the full Defender for Cloud recommendations/compliance view is portal-only: Defender for Cloud → Inventory → filter by resource group) | `az graph query` |
+`10-acr-pull-event-{dev,prod}.txt` comes back empty on both environments
+even at a 7-day lookback. ACR's diagnostic setting doesn't backfill history,
+and both environments' pods were already older than that window by the
+time diagnostics were confirmed wired up — the original pull genuinely
+predates what's been exported to Log Analytics. Not a live problem (images
+are clearly pulling fine — pods are `Running`), just unproven by this
+specific piece of evidence. Re-run the script after any future rolling
+restart/redeploy and it should populate.
 
 ## Adding a new screenshot
 
