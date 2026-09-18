@@ -77,12 +77,16 @@ PUBLIC_IP=$(az network public-ip list -g "$RG" --query "[0].ipAddress" -o tsv)
 } | tee "$OUT_DIR/09-curl-https-200-$ENV.txt"
 echo
 
-echo "== [$ENV] 10 - ACR pull events (last 24h) =="
+echo "== [$ENV] 10 - ACR pull events (last 7d) =="
+# Pods pull on creation, not continuously - a 24h window misses the pull
+# entirely once a pod's been running longer than that (confirmed live: both
+# dev and prod pods were >24h old and returned zero rows at 24h). 7 days
+# comfortably covers the original pull without going back further than needed.
 WORKSPACE_ID=$(az monitor log-analytics workspace show \
   -g "$LAW_RG" -n "$LAW_NAME" --query customerId -o tsv)
 az monitor log-analytics query \
   --workspace "$WORKSPACE_ID" \
-  --analytics-query "ContainerRegistryLoginEvents | where Identity has \"$CLUSTER\" | where TimeGenerated > ago(24h) | project TimeGenerated, LoginServer, Identity, OperationName, ResultType | order by TimeGenerated desc | take 20" \
+  --analytics-query "ContainerRegistryLoginEvents | where Identity has \"$CLUSTER\" | where TimeGenerated > ago(7d) | project TimeGenerated, LoginServer, Identity, OperationName, ResultType | order by TimeGenerated desc | take 20" \
   -o table | tee "$OUT_DIR/10-acr-pull-event-$ENV.txt"
 echo
 
