@@ -267,9 +267,15 @@ Also clean up outside the resource groups, since these aren't scoped to them:
 - **Entra ID group** (`AKS-WebPlat-Admins`) — only remove when retiring
   webplat entirely; it isn't scoped to a single environment.
 
-Prod (`rg-itsolutions-webplat-prod-uks-001`) has never actually been
-provisioned as of this writing — the resource group doesn't exist, so there
-is nothing to tear down there yet; only dev has live resources.
+Both dev and prod resource groups exist in Azure (confirmed via the portal's
+Resource Groups list: `rg-itsolutions-webplat-{dev,prod}-uks-001` and their
+`rg-nodes-aks-itsolutions-webplat-{dev,prod}-uks-001` node groups). Prod's
+GitHub Actions variable (`RESOURCE_GROUP_PROD_WEBPLAT`) was never set, so CI
+never ran a What-If or deploy against it from this pipeline — its contents
+should be checked directly (`az resource list -g
+rg-itsolutions-webplat-prod-uks-001 -o table`) before assuming it matches
+what `bicep/webplat.bicep` would produce, since it may have been created or
+modified outside this repo's CI.
 
 ## Deferred (explicitly out of scope for the initial delivery)
 

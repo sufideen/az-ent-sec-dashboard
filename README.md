@@ -46,12 +46,16 @@ see [`docs/webplat-architecture.md`](docs/webplat-architecture.md) for the
 full design, administrator runbook, security checklist, and teardown
 procedure.
 
-**Status**: dev (`rg-itsolutions-webplat-dev-uks-001`) is deployed and
-verified end-to-end — nodes `Ready`, `demo-web` pods `Running`, App Gateway
-backend pool `Healthy`, and `curl` through the public ingress returns the
-real app over HTTPS. Prod has not been provisioned yet (no resource group
-exists). See [`docs/screenshots/webplat/`](docs/screenshots/webplat/) for
-the evidence checklist and captured output.
+**Status**: both dev (`rg-itsolutions-webplat-dev-uks-001`) and prod
+(`rg-itsolutions-webplat-prod-uks-001`) resource groups are provisioned in
+Azure with real running compute (AKS node VMSS, managed identities,
+networking) in both node resource groups. Dev was verified end-to-end —
+nodes `Ready`, `demo-web` pods `Running`, App Gateway backend pool
+`Healthy`, and `curl` through the public ingress returns the real app over
+HTTPS. Both environments are being torn down — see
+[Tearing down an environment](docs/webplat-architecture.md#tearing-down-an-environment).
+See [`docs/screenshots/webplat/`](docs/screenshots/webplat/) for the
+evidence checklist and captured output.
 
 ## Repository structure
 
