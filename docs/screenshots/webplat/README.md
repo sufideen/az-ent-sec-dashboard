@@ -17,6 +17,7 @@ work) is redacted before committing — see the note at the bottom.
 | `03-dev-node-rg-contents.png` | Dev node resource group: 13 resources — both VMSS node pools, managed identities (agentpool/Key Vault CSI/Azure Policy/AGIC), NSG, public IP, private DNS zone |
 | `04-prod-private-dns-zone.png` | Prod's AKS-managed private DNS zone (`*.privatelink.uksouth.azmk8s.io`) — confirms the private API server, tagged `dataClassification: confidential` |
 | `05-prod-loadbalancer.png` | Prod's AKS-managed Standard Load Balancer with 2 backend pools and an outbound rule |
+| `06-prod-nodes-ready.png` | `kubectl get nodes` via `az aks command invoke` against the prod cluster: all 5 nodes (3 system + 2 user) `Ready`, `v1.36.3` — direct kubelet-level confirmation, not just VMSS instance health |
 
 ## Still outstanding
 
@@ -28,7 +29,6 @@ deleted.
 
 | Filename | Evidence of | Command / where to look |
 |---|---|---|
-| `06-nodes-ready.png` | `kubectl` sees the nodes as `Ready` (portal VMSS status above shows the VMSS instances are healthy, not the kubelet/node-registration state) | `az aks command invoke -g <rg> -n <cluster> --command "kubectl get nodes -o wide"` |
 | `07-pods-running.png` | App pods scheduled and passing readiness | `az aks command invoke -g <rg> -n <cluster> --command "kubectl -n demo-web get pods -o wide"` |
 | `08-appgw-backend-healthy.png` | AGIC wired the Application Gateway backend pool correctly (different resource from the Standard Load Balancer captured above) | Azure Portal → Application Gateway → Backend health |
 | `09-curl-https-200.png` | End-to-end HTTPS ingress serving the real app | `curl -kI https://<dev-hostname>/` → `HTTP/1.1 200`, plus `curl -k https://<dev-hostname>/healthz` → `200` |
