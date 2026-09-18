@@ -218,6 +218,59 @@ offboarding an administrator is a group-membership change — no redeploy.
    confirmed off.
 9. Defender for Cloud → Inventory shows the new AKS cluster as monitored.
 
+## Tearing down an environment
+
+Every webplat resource lives inside its own resource group
+(`rg-itsolutions-webplat-<env>-uks-001`) plus one AKS-managed node resource
+group (`rg-nodes-<cluster-name>`) — nothing webplat owns lives outside those
+two, so a full teardown is two resource-group deletes per environment. This
+is destructive and irreversible: confirm the environment (dev vs prod) and
+that nothing else has been added to that resource group out-of-band before
+running it.
+
+```bash
+# 1. Confirm what's actually in the RG before deleting anything
+az resource list -g rg-itsolutions-webplat-<env>-uks-001 -o table
+az resource list -g rg-nodes-aks-itsolutions-webplat-<env>-uks-001 -o table
+
+# 2. Delete the node resource group first (AKS also does this automatically
+#    when the cluster itself is deleted, but deleting it explicitly avoids
+#    relying on that cascade if the cluster is already in a bad state)
+az group delete -n rg-nodes-aks-itsolutions-webplat-<env>-uks-001 --yes --no-wait
+
+# 3. Delete the main workload resource group (AKS, ACR, App Gateway, Key
+#    Vault, VNet, private DNS zones, diagnostic settings - everything else)
+az group delete -n rg-itsolutions-webplat-<env>-uks-001 --yes --no-wait
+
+# 4. Verify both are gone
+az group exists -n rg-itsolutions-webplat-<env>-uks-001
+az group exists -n rg-nodes-aks-itsolutions-webplat-<env>-uks-001
+```
+
+Also clean up outside the resource groups, since these aren't scoped to them:
+
+- **Azure Policy exemption** created on the node resource group during the
+  original VMSS OS-upgrade policy conflict (`az policy exemption list -g
+  rg-nodes-... -o table`, then `az policy exemption delete`) — deleting the
+  resource group removes the exemption with it, so this is only relevant if
+  you re-target the exemption elsewhere first.
+- **GitHub OIDC federated credentials / App Registration**
+  (`sp-itsolutions-webplat-github`) — only remove if webplat is being retired
+  entirely, not for a redeploy; the same app registration is reused across
+  environments.
+- **GitHub Actions secrets/variables** (`RESOURCE_GROUP_<ENV>_WEBPLAT`,
+  `ACR_NAME_<ENV>`, `AKS_NAME_<ENV>`) — remove or update so CI doesn't keep
+  targeting a deleted resource group. `webplat-what-if.yml` skips gracefully
+  when the resource-group variable is unset, but the infra/app deploy
+  workflows will still fail loudly if left pointing at a deleted RG, by
+  design.
+- **Entra ID group** (`AKS-WebPlat-Admins`) — only remove when retiring
+  webplat entirely; it isn't scoped to a single environment.
+
+Prod (`rg-itsolutions-webplat-prod-uks-001`) has never actually been
+provisioned as of this writing — the resource group doesn't exist, so there
+is nothing to tear down there yet; only dev has live resources.
+
 ## Deferred (explicitly out of scope for the initial delivery)
 
 Azure Firewall/Front Door in front of Application Gateway · WAF rule tuning
