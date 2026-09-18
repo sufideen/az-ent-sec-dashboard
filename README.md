@@ -47,12 +47,13 @@ full design, administrator runbook, security checklist, and teardown
 procedure.
 
 **Status**: both dev (`rg-itsolutions-webplat-dev-uks-001`) and prod
-(`rg-itsolutions-webplat-prod-uks-001`) resource groups are provisioned in
-Azure with real running compute (AKS node VMSS, managed identities,
-networking) in both node resource groups. Dev was verified end-to-end —
-nodes `Ready`, `demo-web` pods `Running`, App Gateway backend pool
-`Healthy`, and `curl` through the public ingress returns the real app over
-HTTPS. Both environments are being torn down — see
+(`rg-itsolutions-webplat-prod-uks-001`) are deployed and verified
+end-to-end — nodes `Ready`, `demo-web` pods `Running`, App Gateway backend
+pool `Healthy`, and `curl` through the public ingress returns the real app
+over HTTPS on both environments. Prod needed a live fix after initial
+deploy (see [Incident: prod SecretProviderClass](docs/webplat-architecture.md#incident-prod-secretproviderclass-never-patched)
+for what broke and why). Both environments can be torn down when no longer
+needed — see
 [Tearing down an environment](docs/webplat-architecture.md#tearing-down-an-environment).
 See [`docs/screenshots/webplat/`](docs/screenshots/webplat/) for the
 evidence checklist and captured output.
