@@ -43,7 +43,20 @@ cluster + private ACR + Application Gateway (WAF_v2) ingress for hosting a
 company website, with a working Nginx demo app and GitHub Actions CI/CD
 (OIDC, no stored secrets). It's independent of the secops platform above —
 see [`docs/webplat-architecture.md`](docs/webplat-architecture.md) for the
-full design, administrator runbook, and security checklist.
+full design, administrator runbook, security checklist, and teardown
+procedure.
+
+**Status**: both dev (`rg-itsolutions-webplat-dev-uks-001`) and prod
+(`rg-itsolutions-webplat-prod-uks-001`) are deployed and verified
+end-to-end — nodes `Ready`, `demo-web` pods `Running`, App Gateway backend
+pool `Healthy`, and `curl` through the public ingress returns the real app
+over HTTPS on both environments. Prod needed a live fix after initial
+deploy (see [Incident: prod SecretProviderClass](docs/webplat-architecture.md#incident-prod-secretproviderclass-never-patched)
+for what broke and why). Both environments can be torn down when no longer
+needed — see
+[Tearing down an environment](docs/webplat-architecture.md#tearing-down-an-environment).
+See [`docs/screenshots/webplat/`](docs/screenshots/webplat/) for the
+evidence checklist and captured output.
 
 ## Repository structure
 

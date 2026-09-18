@@ -41,3 +41,16 @@ patches:
       - op: replace
         path: /spec/ingress/0/from/0/ipBlock/cidr
         value: 10.31.16.0/24
+  - target:
+      kind: SecretProviderClass
+      name: webplat-tls
+    patch: |-
+      - op: replace
+        path: /spec/parameters/userAssignedIdentityID
+        value: 4a6ddd32-7da5-4f94-b001-d6a8c146a153
+      - op: replace
+        path: /spec/parameters/keyvaultName
+        value: kvwebplatprod2su655bqyw7
+      - op: replace
+        path: /spec/parameters/tenantId
+        value: fc1d277f-2fcb-4721-b141-1e117c362266

@@ -124,14 +124,28 @@ k8s/overlays/{dev,prod}/             # per-environment image tag, replicas, host
    automatically, then prod behind the `production` environment's approval
    gate.
 6. **Create the TLS certificate** in the Key Vault the deploy created (name
-   is in the deployment outputs):
+   is in the deployment outputs). The vault is private by default
+   (`publicNetworkAccess: Disabled`), so a direct `az keyvault` call from an
+   admin's laptop fails with `ForbiddenByConnection` until public access is
+   temporarily opened:
    ```bash
+   az keyvault update --name <kv-name> --public-network-access Enabled
+   MYIP=$(curl -4 -s ifconfig.me)   # force IPv4 - ifconfig.me can return IPv6, which silently breaks a /32 rule
+   az keyvault network-rule add --name <kv-name> --ip-address "$MYIP"
+   sleep 60   # let the rule propagate
    az keyvault certificate create --vault-name <kv-name> \
      --name webplat-tls-cert \
      --policy "$(az keyvault certificate get-default-policy)"
    ```
    (Self-signed by default — swap for a real CA cert later via the same
-   command with a custom policy; no redeploy needed.)
+   command with a custom policy; no redeploy needed.) **Revert afterward** -
+   remove the network rule and set `--public-network-access Disabled` again
+   once the cert is created, to restore the vault's intended private-only
+   posture; it isn't needed again until the cert is rotated. Also confirm
+   your own identity has `Key Vault Certificates Officer` on the vault
+   first (`ForbiddenByRbac` otherwise) - this is separate from the AKS
+   add-on identity's RBAC, which is granted automatically by
+   `bicep/webplat.bicep`.
 7. **Fill in the placeholders** in `k8s/base/secretproviderclass.yaml`
    (`userAssignedIdentityID` = the `keyVaultSecretsProviderIdentityClientId`
    deployment output of `bicep/webplat.bicep` — this is the add-on's
@@ -208,6 +222,22 @@ offboarding an administrator is a group-membership change — no redeploy.
    az aks command invoke ... --command "kubectl apply -f rendered.yaml" --file /tmp/rendered.yaml
    ```
    then `kubectl -n demo-web get pods` shows `Running` pods passing readiness.
+
+   **Don't apply this rendered file by hand for a real deploy.** The
+   `newTag`/`newName` in each overlay's `kustomization.yaml` are the literal
+   placeholders `REPLACE_WITH_ACR_LOGIN_SERVER`/`REPLACE_WITH_IMAGE_TAG` -
+   `webplat-app-deploy.yml` substitutes the real ACR login server and git
+   SHA via `sed` immediately before rendering, as one step in that
+   workflow. A manual `kubectl kustomize ... | kubectl apply` skips that
+   substitution entirely and ships the literal placeholder as the image
+   reference, which schedules a new, broken `ImagePullBackOff`/
+   `InvalidImageName` ReplicaSet alongside whatever was already running
+   (confirmed live on prod - see the incident below). This command sequence
+   is for rendering to *inspect* the output or to debug a stuck rollout,
+   not as a substitute for the CI/CD pipeline. If you do need to apply
+   manually, run the same `sed` substitution `webplat-app-deploy.yml` uses
+   first, or just `kubectl set image deployment/demo-web
+   demo-web=<real-image>` directly afterward to correct it.
 6. `kubectl describe pod <pod>` shows no `ImagePullBackOff`; the ACR
    diagnostic logs in the shared Log Analytics Workspace show a `Pull`
    event tied to the AKS kubelet identity — proving `AcrPull` RBAC is
@@ -217,6 +247,115 @@ offboarding an administrator is a group-membership change — no redeploy.
 8. `az acr credential show -n <acr>` fails/shows disabled — admin user
    confirmed off.
 9. Defender for Cloud → Inventory shows the new AKS cluster as monitored.
+
+## Incident: prod SecretProviderClass never patched
+
+**2026-09-18.** Prod's `demo-web` pods sat in `ContainerCreating` for over
+24 hours, undetected until an evidence-gathering pass surfaced it.
+Root-caused and fixed live; documented here since the same gap could recur
+for any environment that skips the per-environment patch step.
+
+**Symptom:** all `demo-web` pods stuck `ContainerCreating`; App Gateway
+`show-backend-health` returned zero registered servers (not "Unhealthy" -
+*no servers at all*); `curl` timed out connecting to port 443 entirely
+(not a TLS error - nothing was listening).
+
+**Root cause:** unlike dev, `k8s/overlays/prod/kustomization.yaml` never
+got a `SecretProviderClass` patch, so prod was running
+`k8s/base/secretproviderclass.yaml`'s literal placeholder strings
+(`REPLACE_WITH_KEY_VAULT_NAME` etc.) verbatim. `kubectl describe pod`
+confirmed it directly: `failed to get vault: Invalid vault name:
+"REPLACE_WITH_KEY_VAULT_NAME"`. The CSI driver could never mount the TLS
+secret, so pods never became `Ready`, and AGIC never had a healthy backend
+to wire the Application Gateway to - explaining every downstream symptom.
+
+**Fix, in order:**
+1. Added the missing `SecretProviderClass` patch to
+   `k8s/overlays/prod/kustomization.yaml` (real `keyvaultName`,
+   `userAssignedIdentityID`, `tenantId` for prod - see commit
+   `79dd3d9`), matching dev's existing pattern.
+2. Applying it live surfaced a second issue: the admin's own identity
+   lacked `Key Vault Certificates Officer` on prod's vault (`ForbiddenByRbac`) -
+   granted via `az role assignment create`.
+3. That surfaced a third: prod's Key Vault is private
+   (`publicNetworkAccess: Disabled`) with no VPN/Bastion path, so even an
+   authorized admin's laptop couldn't reach it (`ForbiddenByConnection`) -
+   temporarily opened, per the updated step 6 above.
+4. That surfaced the actual, final blocker: `webplat-tls-cert` had never
+   been created in prod's vault at all (`SecretNotFound`, 404) - dev's cert
+   existed, prod's never did. Created it the same way dev's was.
+5. A `kubectl apply` from a *locally rendered* (not CI-substituted)
+   manifest during recovery introduced a second, separate bug: an
+   `InvalidImageName` pod on a new ReplicaSet, from the unsubstituted
+   `REPLACE_WITH_ACR_LOGIN_SERVER/demo-web:REPLACE_WITH_IMAGE_TAG`
+   placeholder (see the warning in Verification step 5 above). Fixed with
+   `kubectl set image` to the last known-good image reference.
+
+Each layer only became visible once the one before it was fixed - a
+reminder that a private-by-default Key Vault, a separate RBAC principal
+for the AKS add-on vs. the human admin, and a CI-only `sed` substitution
+step are three independent things that all have to be right, and none of
+their failure modes look alike (`ForbiddenByConnection` vs. `ForbiddenByRbac`
+vs. `SecretNotFound` vs. `Invalid vault name` vs. `InvalidImageName`).
+
+## Tearing down an environment
+
+Every webplat resource lives inside its own resource group
+(`rg-itsolutions-webplat-<env>-uks-001`) plus one AKS-managed node resource
+group (`rg-nodes-<cluster-name>`) — nothing webplat owns lives outside those
+two, so a full teardown is two resource-group deletes per environment. This
+is destructive and irreversible: confirm the environment (dev vs prod) and
+that nothing else has been added to that resource group out-of-band before
+running it.
+
+```bash
+# 1. Confirm what's actually in the RG before deleting anything
+az resource list -g rg-itsolutions-webplat-<env>-uks-001 -o table
+az resource list -g rg-nodes-aks-itsolutions-webplat-<env>-uks-001 -o table
+
+# 2. Delete the node resource group first (AKS also does this automatically
+#    when the cluster itself is deleted, but deleting it explicitly avoids
+#    relying on that cascade if the cluster is already in a bad state)
+az group delete -n rg-nodes-aks-itsolutions-webplat-<env>-uks-001 --yes --no-wait
+
+# 3. Delete the main workload resource group (AKS, ACR, App Gateway, Key
+#    Vault, VNet, private DNS zones, diagnostic settings - everything else)
+az group delete -n rg-itsolutions-webplat-<env>-uks-001 --yes --no-wait
+
+# 4. Verify both are gone
+az group exists -n rg-itsolutions-webplat-<env>-uks-001
+az group exists -n rg-nodes-aks-itsolutions-webplat-<env>-uks-001
+```
+
+Also clean up outside the resource groups, since these aren't scoped to them:
+
+- **Azure Policy exemption** created on the node resource group during the
+  original VMSS OS-upgrade policy conflict (`az policy exemption list -g
+  rg-nodes-... -o table`, then `az policy exemption delete`) — deleting the
+  resource group removes the exemption with it, so this is only relevant if
+  you re-target the exemption elsewhere first.
+- **GitHub OIDC federated credentials / App Registration**
+  (`sp-itsolutions-webplat-github`) — only remove if webplat is being retired
+  entirely, not for a redeploy; the same app registration is reused across
+  environments.
+- **GitHub Actions secrets/variables** (`RESOURCE_GROUP_<ENV>_WEBPLAT`,
+  `ACR_NAME_<ENV>`, `AKS_NAME_<ENV>`) — remove or update so CI doesn't keep
+  targeting a deleted resource group. `webplat-what-if.yml` skips gracefully
+  when the resource-group variable is unset, but the infra/app deploy
+  workflows will still fail loudly if left pointing at a deleted RG, by
+  design.
+- **Entra ID group** (`AKS-WebPlat-Admins`) — only remove when retiring
+  webplat entirely; it isn't scoped to a single environment.
+
+Both dev and prod resource groups exist in Azure (confirmed via the portal's
+Resource Groups list: `rg-itsolutions-webplat-{dev,prod}-uks-001` and their
+`rg-nodes-aks-itsolutions-webplat-{dev,prod}-uks-001` node groups). Prod's
+GitHub Actions variable (`RESOURCE_GROUP_PROD_WEBPLAT`) was never set, so CI
+never ran a What-If or deploy against it from this pipeline — its contents
+should be checked directly (`az resource list -g
+rg-itsolutions-webplat-prod-uks-001 -o table`) before assuming it matches
+what `bicep/webplat.bicep` would produce, since it may have been created or
+modified outside this repo's CI.
 
 ## Deferred (explicitly out of scope for the initial delivery)
 

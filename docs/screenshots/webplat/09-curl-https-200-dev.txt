@@ -1,0 +1,17 @@
+App Gateway public IP: 20.77.179.173
+
+$ curl -kI --resolve dev-webplat.ict-cloud.solutions:443:20.77.179.173 https://dev-webplat.ict-cloud.solutions/
+HTTP/1.1 200 OK
+Date: Fri, 18 Sep 2026 15:17:00 GMT
+Content-Type: text/html
+Content-Length: 2037
+Connection: keep-alive
+Server: nginx/1.27.5
+Last-Modified: Thu, 17 Sep 2026 11:56:45 GMT
+ETag: "6aabd57d-7f5"
+Accept-Ranges: bytes
+
+
+$ curl -k --resolve dev-webplat.ict-cloud.solutions:443:20.77.179.173 https://dev-webplat.ict-cloud.solutions/healthz
+ok
+
