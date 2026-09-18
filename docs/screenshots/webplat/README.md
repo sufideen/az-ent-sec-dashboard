@@ -27,14 +27,25 @@ session, never saved to disk. **If a teardown of dev/prod is imminent,
 capture these now** — they can't be recaptured once the resource groups are
 deleted.
 
-| Filename | Evidence of | Command / where to look |
+Run [`../../scripts/capture-webplat-evidence.sh`](../../scripts/capture-webplat-evidence.sh)
+(`dev` or `prod`) to capture all of them in one pass — it writes the raw
+text output straight into this folder (`07-pods-running-<env>.txt`, etc.),
+which needs no redaction the way a screenshot would:
+
+```bash
+./scripts/capture-webplat-evidence.sh dev
+./scripts/capture-webplat-evidence.sh prod
+git add docs/screenshots/webplat/*.txt
+```
+
+| Filename | Evidence of | What the script runs |
 |---|---|---|
-| `07-pods-running.png` | App pods scheduled and passing readiness | `az aks command invoke -g <rg> -n <cluster> --command "kubectl -n demo-web get pods -o wide"` |
-| `08-appgw-backend-healthy.png` | AGIC wired the Application Gateway backend pool correctly (different resource from the Standard Load Balancer captured above) | Azure Portal → Application Gateway → Backend health |
-| `09-curl-https-200.png` | End-to-end HTTPS ingress serving the real app | `curl -kI https://<dev-hostname>/` → `HTTP/1.1 200`, plus `curl -k https://<dev-hostname>/healthz` → `200` |
-| `10-acr-pull-event.png` | Kubelet identity pulling images with zero stored credentials (no admin user) | Log Analytics query: `ContainerRegistryLoginEvents \| where Identity has "aks-itsolutions-webplat-dev"` |
-| `11-portal-aks-overview.png` | Cluster provisioning state, private API server, node pool status | Azure Portal → AKS cluster → Overview |
-| `12-defender-inventory.png` | Cluster showing up in Defender for Cloud inventory | Defender for Cloud → Inventory → filter by resource group |
+| `07-pods-running-<env>.txt` | App pods scheduled and passing readiness | `kubectl -n demo-web get pods -o wide` via `az aks command invoke` |
+| `08-appgw-backend-healthy-<env>.txt` | AGIC wired the Application Gateway backend pool correctly (different resource from the Standard Load Balancer already captured) | `az network application-gateway show-backend-health` |
+| `09-curl-https-200-<env>.txt` | End-to-end HTTPS ingress serving the real app | `curl -kI` / `curl -k .../healthz` against the App Gateway's public IP (`--resolve`'d to the configured hostname, real or placeholder) |
+| `10-acr-pull-event-<env>.txt` | Kubelet identity pulling images with zero stored credentials (no admin user) | Log Analytics query against `ContainerRegistryLoginEvents` |
+| `11-portal-aks-overview-<env>.txt` | Cluster provisioning state, private API server, node pool status | `az aks show` |
+| `12-defender-inventory-<env>.txt` | Resource confirmed in the subscription's Resource Graph (a best-effort CLI proxy — the full Defender for Cloud recommendations/compliance view is portal-only: Defender for Cloud → Inventory → filter by resource group) | `az graph query` |
 
 ## Adding a new screenshot
 
