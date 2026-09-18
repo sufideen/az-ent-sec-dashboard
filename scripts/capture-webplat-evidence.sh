@@ -55,8 +55,11 @@ az aks command invoke -g "$RG" -n "$CLUSTER" \
 echo
 
 echo "== [$ENV] 08 - Application Gateway backend health =="
+# -o table can't flatten the nested backendAddressPools[].backendHttpSettingsCollection[].servers[]
+# structure (renders blank), so --query flattens it to one row per backend server first.
 az network application-gateway show-backend-health \
   -g "$RG" -n "$APPGW" \
+  --query "backendAddressPools[].backendHttpSettingsCollection[].servers[].{address:address, health:health}" \
   -o table | tee "$OUT_DIR/08-appgw-backend-healthy-$ENV.txt"
 echo
 
@@ -79,7 +82,7 @@ WORKSPACE_ID=$(az monitor log-analytics workspace show \
   -g "$LAW_RG" -n "$LAW_NAME" --query customerId -o tsv)
 az monitor log-analytics query \
   --workspace "$WORKSPACE_ID" \
-  --analytics-query "ContainerRegistryLoginEvents | where Identity has \"$CLUSTER\" | where TimeGenerated > ago(24h) | project TimeGenerated, Identity, Repository, OperationName | order by TimeGenerated desc | take 20" \
+  --analytics-query "ContainerRegistryLoginEvents | where Identity has \"$CLUSTER\" | where TimeGenerated > ago(24h) | project TimeGenerated, LoginServer, Identity, OperationName, ResultType | order by TimeGenerated desc | take 20" \
   -o table | tee "$OUT_DIR/10-acr-pull-event-$ENV.txt"
 echo
 
