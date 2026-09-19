@@ -33,7 +33,7 @@ jobs:
         environment: [dev, prod]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Check resource group variable is configured
         id: check-rg
