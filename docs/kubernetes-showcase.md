@@ -240,4 +240,4 @@ the full index and the exact command behind each file.
 
 A condensed, presentation-format version of this document — for a
 portfolio review, an interview, or a client pitch — is at
-[`webplat-kubernetes-showcase.pptx`](webplat-kubernetes-showcase.pptx).
+[`webplat-kubernetes-showcase.pdf`](webplat-kubernetes-showcase.pdf) (viewable in GitHub), or download the editable [`.pptx`](webplat-kubernetes-showcase.pptx).
