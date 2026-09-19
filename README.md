@@ -63,6 +63,8 @@ reviewer who wants the story, not just the file tree.
   inventory, the identity/RBAC matrix, day-2 procedures, and a
   troubleshooting playbook built from real incidents on this platform
 
+> **Lab environments.** These are lab deployments used to demonstrate the design. Public IP addresses in the evidence files are replaced with documentation-range addresses (`203.0.113.x`), and the environments may be torn down when not in use.
+
 **Status**: both dev (`rg-itsolutions-webplat-dev-uks-001`) and prod
 (`rg-itsolutions-webplat-prod-uks-001`) are deployed and verified
 end-to-end — nodes `Ready`, `demo-web` pods `Running`, App Gateway backend

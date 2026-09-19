@@ -26,7 +26,7 @@ the "why." This document assumes that context and gets straight to "how."
 | Container registry | `acritsolutionswebplatdev001` | Premium SKU, `.azurecr.io` |
 | Key Vault | `kvwebplatdev3r4cvt3hsiof` | RBAC-authorized |
 | Application Gateway | `agw-itsolutions-webplat-dev-uks-001` | WAF_v2 |
-| Public IP | `20.77.179.173` | |
+| Public IP | `203.0.113.10` | |
 | VNet | `vnet-itsolutions-webplat-dev-uks-001` | `10.30.0.0/16` |
 | Ingress hostname | `dev-webplat.ict-cloud.solutions` | real DNS |
 
@@ -42,7 +42,7 @@ the "why." This document assumes that context and gets straight to "how."
 | Container registry | `acritsolutionswebplatprod001` | Premium SKU |
 | Key Vault | `kvwebplatprod2su655bqyw7` | RBAC-authorized, public network access **disabled by default** |
 | Application Gateway | `agw-itsolutions-webplat-prod-uks-001` | WAF_v2 |
-| Public IP | `20.0.211.251` | |
+| Public IP | `203.0.113.11` | |
 | VNet | `vnet-itsolutions-webplat-prod-uks-001` | `10.31.0.0/16` |
 | Ingress hostname | `www.itsolutions.example.com` | **placeholder — not a registered domain**; infra and TLS are real |
 
