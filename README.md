@@ -161,13 +161,6 @@ See [docs/deployment-guide.md](docs/deployment-guide.md) for the full walkthroug
 
 Internal reference architecture. Adapt naming, RBAC group IDs, and cost assumptions to your tenant before deploying.
 
-## How this was built
-
-The architecture, scope and security decisions are the author's. Claude (Anthropic's
-AI assistant) was used as a coding assistant to draft code and documentation, and every
-change was reviewed and merged by the author. Commits and pull requests co-authored by
-Claude are labelled as such in the history.
-
 ## Reproduce it from scratch
 
 1. **Prerequisites:** an Azure subscription (this creates billable resources, so use a
