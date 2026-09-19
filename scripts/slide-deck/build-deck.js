@@ -1,4 +1,5 @@
 const pptxgen = require("pptxgenjs");
+const path = require("path");
 const { iconPng, fa } = require("./icons.js");
 
 // ---- palette: "Midnight Executive" ----
@@ -79,7 +80,7 @@ async function main() {
       x: 0.8, y: 2.15, w: W - 1.6, h: 1.1, fontSize: 40, bold: true, color: WHITE,
       align: "center", fontFace: "Cambria", isTextBox: true,
     });
-    s.addText("A private AKS platform — designed, deployed, broken, diagnosed,\nand fixed end-to-end on real Azure infrastructure", {
+    s.addText("How I designed, deployed, broke, diagnosed and fixed\na private AKS platform on real Azure infrastructure", {
       x: 1.3, y: 3.35, w: W - 2.6, h: 0.9, fontSize: 17, color: ICE,
       align: "center", fontFace: "Calibri", isTextBox: true, lineSpacingMultiple: 1.25,
     });
@@ -88,10 +89,11 @@ async function main() {
       x: W / 2 - 1.7, y: 4.55, w: 3.4, h: 0.55, fontSize: 11, bold: true, color: ACCENT,
       align: "center", valign: "middle", fontFace: "Calibri", isTextBox: true, charSpacing: 1,
     });
-    s.addText("Sufyan Deen-Gabisi   ·   github.com/sufideen/az-ent-sec-dashboard", {
+    s.addText("Presented by Sufyan Deen-Gabisi   ·   github.com/sufideen/az-ent-sec-dashboard", {
       x: 0.8, y: H - 0.75, w: W - 1.6, h: 0.4, fontSize: 11, color: "8891C0",
       align: "center", fontFace: "Calibri", isTextBox: true,
     });
+    s.addNotes("Thanks for having me. Over the next few minutes I'll walk you through a platform I designed and built myself: a private Kubernetes cluster on Azure, deployed through a pipeline with no stored passwords. I'll show you the design, and I'll also show you the day it broke, because that is where I learned the most.");
   }
 
   // ======================================================================
@@ -100,11 +102,11 @@ async function main() {
   {
     const s = pres.addSlide();
     s.background = { color: WHITE };
-    s.addText("What This Is", { x: 0.6, y: 0.45, w: 8, h: 0.7, fontSize: 32, bold: true, color: INK, fontFace: "Cambria", isTextBox: true });
+    s.addText("What I Built", { x: 0.6, y: 0.45, w: 8, h: 0.7, fontSize: 32, bold: true, color: INK, fontFace: "Cambria", isTextBox: true });
     s.addText(
-      "A containerized web application running on a private Azure Kubernetes Service cluster, fronted by a " +
-      "WAF-enabled Application Gateway, backed by a private container registry, deployed through OIDC-authenticated " +
-      "GitHub Actions CI/CD — with zero long-lived credentials anywhere in the pipeline.",
+      "I built a containerized web application on a private Azure Kubernetes Service cluster. It sits behind a " +
+      "WAF-enabled Application Gateway, pulls images from a private container registry, and is deployed by " +
+      "GitHub Actions using OIDC, so there are no long-lived credentials anywhere in the pipeline.",
       { x: 0.6, y: 1.25, w: 12.1, h: 0.9, fontSize: 14.5, color: MUTED, fontFace: "Calibri", isTextBox: true, lineSpacingMultiple: 1.25 }
     );
 
@@ -124,9 +126,10 @@ async function main() {
       s.addText(label, { x: x + 0.15, y: cardY + 1.85, w: cardW - 0.3, h: 0.6, fontSize: 11.5, color: MUTED, align: "center", fontFace: "Calibri", isTextBox: true, lineSpacingMultiple: 1.1 });
     });
 
-    s.addText("Both environments verified end-to-end as of 2026-09-18 — real pods, real TLS, real public IP, real HTTP 200.", {
+    s.addText("I verified both environments end to end on 2026-09-18: real pods, real TLS, a real public IP and a real HTTP 200.", {
       x: 0.6, y: 5.55, w: 12.1, h: 0.5, fontSize: 12.5, italic: true, color: NAVY, fontFace: "Calibri", isTextBox: true,
     });
+    s.addNotes("In one sentence: it's a website running on Kubernetes that I locked down properly. Two environments, dev and prod. The API server has no public address, and nothing in the pipeline holds a password or key. I'll show you proof of both environments later, from the live Azure portal and the command line.");
     footer(s, 2);
   }
 
@@ -136,7 +139,7 @@ async function main() {
   {
     const s = pres.addSlide();
     s.background = { color: WHITE };
-    s.addText("Architecture", { x: 0.6, y: 0.35, w: 8, h: 0.6, fontSize: 30, bold: true, color: INK, fontFace: "Cambria", isTextBox: true });
+    s.addText("Architecture: how a request travels", { x: 0.6, y: 0.35, w: 10, h: 0.6, fontSize: 30, bold: true, color: INK, fontFace: "Cambria", isTextBox: true });
 
     const boxLine = { color: "9AA7CE", width: 1 };
     const arrow = (x1, y1, x2, y2) => s.addShape("line", { x: x1, y: y1, w: x2 - x1, h: y2 - y1, line: { color: NAVY, width: 2, endArrowType: "triangle" } });
@@ -151,23 +154,23 @@ async function main() {
     iconCircle(s, "gateway", W / 2 - 1.9, 2.42, 0.5, NAVY_DARK, 0.6);
     s.addText("Application Gateway (WAF_v2)", { x: W / 2 - 1.25, y: 2.35, w: 3.3, h: 0.3, fontSize: 13, bold: true, color: WHITE, fontFace: "Calibri", isTextBox: true });
     s.addText("public IP · TLS termination · OWASP ruleset", { x: W / 2 - 1.25, y: 2.63, w: 3.3, h: 0.3, fontSize: 9.5, color: ICE, fontFace: "Calibri", isTextBox: true });
-    arrow(W / 2, 3.1, W / 2, 3.5);
+    arrow(W / 2, 3.1, W / 2, 3.45);
     s.addText("AGIC watches Ingress objects, reconfigures the Gateway automatically", {
       x: W / 2 + 0.15, y: 3.12, w: 3.6, h: 0.4, fontSize: 8.5, italic: true, color: MUTED, fontFace: "Calibri", isTextBox: true });
 
     // AKS cluster box
-    const clY = 3.5, clH = 2.85;
+    const clY = 3.45, clH = 2.35;
     s.addShape("roundRect", { x: 1.4, y: clY, w: W - 2.8, h: clH, fill: { color: CARD_LIGHT }, line: { color: NAVY, width: 1.5, dashType: "dash" }, rectRadius: 0.1 });
     s.addText("AKS CLUSTER  —  PRIVATE API SERVER (no public control-plane IP)", {
       x: 1.6, y: clY + 0.12, w: W - 3.2, h: 0.35, fontSize: 12, bold: true, color: NAVY, fontFace: "Calibri", isTextBox: true, charSpacing: 0.5 });
 
-    const poolW = 3.6, poolY = clY + 0.65, poolH = 1.9;
+    const poolW = 3.6, poolY = clY + 0.6, poolH = 1.55;
     // system pool
     s.addShape("roundRect", { x: 2.1, y: poolY, w: poolW, h: poolH, fill: { color: WHITE }, line: { color: "9AA7CE", width: 1 }, rectRadius: 0.08 });
     iconCircle(s, "server", 2.3, poolY + 0.2, 0.55, NAVY, 0.55);
     s.addText("System node pool", { x: 3.0, y: poolY + 0.22, w: 2.5, h: 0.3, fontSize: 12.5, bold: true, color: INK, fontFace: "Calibri", isTextBox: true });
     s.addText("mode=System · CriticalAddonsOnly taint\nAdd-ons only — no app workloads scheduled here", {
-      x: 2.3, y: poolY + 0.85, w: poolW - 0.5, h: 0.9, fontSize: 10, color: MUTED, fontFace: "Calibri", isTextBox: true, lineSpacingMultiple: 1.2 });
+      x: 2.3, y: poolY + 0.85, w: poolW - 0.5, h: 0.6, fontSize: 10, color: MUTED, fontFace: "Calibri", isTextBox: true, lineSpacingMultiple: 1.2 });
 
     // user pool
     const upX = 2.1 + poolW + 0.55;
@@ -175,10 +178,10 @@ async function main() {
     iconCircle(s, "cubes", upX + 0.2, poolY + 0.2, 0.55, NAVY, 0.55);
     s.addText("User node pool (autoscaling)", { x: upX + 0.9, y: poolY + 0.22, w: 2.6, h: 0.3, fontSize: 12.5, bold: true, color: INK, fontFace: "Calibri", isTextBox: true });
     s.addText("namespace: demo-web · Deployment, 2-5\nreplicas via HorizontalPodAutoscaler", {
-      x: upX + 0.2, y: poolY + 0.85, w: poolW - 0.5, h: 0.9, fontSize: 10, color: MUTED, fontFace: "Calibri", isTextBox: true, lineSpacingMultiple: 1.2 });
+      x: upX + 0.2, y: poolY + 0.85, w: poolW - 0.5, h: 0.6, fontSize: 10, color: MUTED, fontFace: "Calibri", isTextBox: true, lineSpacingMultiple: 1.2 });
 
     // downstream: ACR + Key Vault
-    const downY = clY + clH + 0.35, boxW = 3.4, boxH = 1.05;
+    const downY = clY + clH + 0.25, boxW = 3.4, boxH = 0.95;
     const acrX = W / 2 - boxW - 0.4, kvX = W / 2 + 0.4;
     arrow(2.1 + poolW * 0.15, poolY + poolH, acrX + boxW / 2, downY);
     arrow(upX + poolW * 0.85, poolY + poolH, kvX + boxW / 2, downY);
@@ -193,6 +196,7 @@ async function main() {
     s.addText("Key Vault", { x: kvX + 0.95, y: downY + 0.14, w: boxW - 1.1, h: 0.3, fontSize: 12, bold: true, color: WHITE, fontFace: "Calibri", isTextBox: true });
     s.addText("RBAC-authorized · private endpoint\nTLS cert synced via CSI driver identity", { x: kvX + 0.95, y: downY + 0.46, w: boxW - 1.1, h: 0.55, fontSize: 9, color: ICE, fontFace: "Calibri", isTextBox: true, lineSpacingMultiple: 1.15 });
 
+    s.addNotes("Follow a visitor's request from the top. It arrives at the Application Gateway, where the WAF filters it and TLS ends. The Gateway forwards to pods in the AKS cluster. I split the cluster into a system pool that only runs Azure's own add-ons and a user pool for my app, which autoscales. Underneath sit two private services: the container registry that holds my images and Key Vault that holds the TLS certificate. Neither is reachable from the internet.");
     footer(s, 3);
   }
 
@@ -203,7 +207,7 @@ async function main() {
     const s = pres.addSlide();
     s.background = { color: WHITE };
     s.addText("Inside the Cluster", { x: 0.6, y: 0.4, w: 8, h: 0.6, fontSize: 30, bold: true, color: INK, fontFace: "Cambria", isTextBox: true });
-    s.addText("Real Kubernetes objects, mapped to what they actually do here", {
+    s.addText("The Kubernetes objects I deployed, and what each one does for me", {
       x: 0.6, y: 0.98, w: 10, h: 0.4, fontSize: 13, color: MUTED, fontFace: "Calibri", isTextBox: true });
 
     const rows = [
@@ -223,6 +227,7 @@ async function main() {
       s.addText(term, { x: 1.45, y: y + 0.02, w: 3.1, h: rowH - 0.04, fontSize: 12.5, bold: true, color: INK, fontFace: "Calibri", isTextBox: true, valign: "middle" });
       s.addText(def, { x: 4.65, y: y + 0.02, w: 8, h: rowH - 0.04, fontSize: 11.5, color: MUTED, fontFace: "Calibri", isTextBox: true, valign: "middle" });
     });
+    s.addNotes("If you're not a Kubernetes person, read this as a checklist of what I configured. The two I care about most are the default-deny network policy, which means pods can't talk to each other or out unless I say so, and the container settings: non-root, read-only filesystem, all Linux capabilities dropped.");
     footer(s, 4);
   }
 
@@ -232,7 +237,7 @@ async function main() {
   {
     const s = pres.addSlide();
     s.background = { color: NAVY };
-    s.addText("Security by Design", { x: 0.6, y: 0.5, w: 10, h: 0.7, fontSize: 30, bold: true, color: WHITE, fontFace: "Cambria", isTextBox: true });
+    s.addText("How I Locked It Down", { x: 0.6, y: 0.5, w: 10, h: 0.7, fontSize: 30, bold: true, color: WHITE, fontFace: "Cambria", isTextBox: true });
 
     const items = [
       ["lock", "Private API server", "No public control-plane IP, anywhere"],
@@ -252,6 +257,7 @@ async function main() {
       s.addText(title, { x: x + 0.25, y: y + 1.0, w: cardW - 0.5, h: 0.55, fontSize: 14, bold: true, color: WHITE, fontFace: "Calibri", isTextBox: true, lineSpacingMultiple: 1.05 });
       s.addText(desc, { x: x + 0.25, y: y + 1.5, w: cardW - 0.5, h: 0.6, fontSize: 10.5, color: ICE, fontFace: "Calibri", isTextBox: true, lineSpacingMultiple: 1.15 });
     });
+    s.addNotes("Six decisions, all made up front rather than bolted on. The one people ask about most is the second: my pipeline logs into Azure with short-lived federated tokens, so there is no client secret in GitHub to steal or rotate. The same idea applies to the registry, Key Vault and the Gateway: they all use managed identities.");
     footer(s, 5, true);
   }
 
@@ -284,9 +290,10 @@ async function main() {
     });
 
     s.addShape("roundRect", { x: 0.6, y: 5.1, w: 12.1, h: 1.15, fill: { color: CARD_LIGHT }, line: { type: "none" }, rectRadius: 0.1 });
-    s.addText("Why this matters: a GitHub-hosted runner has no network line-of-sight into the cluster at all. " +
-      "“command invoke” executes kubectl inside the cluster's own control plane — zero VPN, self-hosted runner, or Bastion host required.", {
+    s.addText("Why I built it this way: a GitHub-hosted runner has no network route into a private cluster. " +
+      "So I use “az aks command invoke”, which runs kubectl through Azure itself. No VPN, no self-hosted runner and no Bastion host.", {
       x: 0.95, y: 5.28, w: 11.4, h: 0.8, fontSize: 12, italic: true, color: NAVY, fontFace: "Calibri", isTextBox: true, valign: "middle", lineSpacingMultiple: 1.25 });
+    s.addNotes("This is the path from a code change to a running pod. The design problem I had to solve is that a private cluster can't be reached from a normal build runner. I used command invoke so the pipeline can still deploy without opening any network path. Dev deploys automatically, and prod waits for a human approval.");
     footer(s, 6);
   }
 
@@ -297,8 +304,8 @@ async function main() {
     const s = pres.addSlide();
     s.background = { color: NAVY };
     iconCircle(s, "warnWhite", 0.6, 0.5, 0.7, NAVY_DARK, 0.6);
-    s.addText("A Real Incident, Not a Demo", { x: 1.5, y: 0.5, w: 10, h: 0.6, fontSize: 28, bold: true, color: WHITE, fontFace: "Cambria", isTextBox: true });
-    s.addText("Prod's app sat in ContainerCreating for 24+ hours, undetected — diagnosed and fixed live, five layers deep.", {
+    s.addText("The Day Prod Broke", { x: 1.5, y: 0.5, w: 10, h: 0.6, fontSize: 28, bold: true, color: WHITE, fontFace: "Cambria", isTextBox: true });
+    s.addText("My prod app sat in ContainerCreating for over 24 hours and I hadn't noticed. Here is how I found it, five layers deep.", {
       x: 1.5, y: 1.05, w: 11, h: 0.4, fontSize: 13, color: ICE, fontFace: "Calibri", isTextBox: true });
 
     const layers = [
@@ -319,6 +326,7 @@ async function main() {
 
     s.addText("Full root-cause timeline: docs/webplat-architecture.md → “Incident: prod SecretProviderClass never patched”", {
       x: 0.6, y: startY + layers.length * rowH + 0.15, w: 12, h: 0.4, fontSize: 10.5, italic: true, color: "8891C0", fontFace: "Calibri", isTextBox: true });
+    s.addNotes("This is the slide I'm most glad to show. After I deployed prod, the pods were stuck and I didn't spot it for a day. Fixing it meant peeling back five separate problems, and each fix exposed the next. The first was a placeholder I forgot to patch in prod's config. The last was a manual step I took mid-recovery that skipped the pipeline's image substitution. What I took from it: put a check on pod readiness in the pipeline, and don't do manual applies during a recovery.");
     footer(s, 7, true);
   }
 
@@ -328,8 +336,8 @@ async function main() {
   {
     const s = pres.addSlide();
     s.background = { color: WHITE };
-    s.addText("Kubernetes, Explained", { x: 0.6, y: 0.4, w: 10, h: 0.6, fontSize: 30, bold: true, color: INK, fontFace: "Cambria", isTextBox: true });
-    s.addText("Key terms, in plain language, in the context of this project", {
+    s.addText("Kubernetes in Plain Language", { x: 0.6, y: 0.4, w: 10, h: 0.6, fontSize: 30, bold: true, color: INK, fontFace: "Cambria", isTextBox: true });
+    s.addText("The terms I'll use today, explained the way I use them in this project", {
       x: 0.6, y: 0.98, w: 10, h: 0.4, fontSize: 13, color: MUTED, fontFace: "Calibri", isTextBox: true });
 
     const terms = [
@@ -351,6 +359,7 @@ async function main() {
       s.addText(term, { x, y, w: colW, h: 0.32, fontSize: 13, bold: true, color: NAVY, fontFace: "Calibri", isTextBox: true });
       s.addText(def, { x, y: y + 0.32, w: colW, h: 0.5, fontSize: 10.5, color: MUTED, fontFace: "Calibri", isTextBox: true, lineSpacingMultiple: 1.1 });
     });
+    s.addNotes("A quick glossary so nobody gets lost. If you only remember three: a pod is one running copy of the app, a Deployment keeps N pods alive, and an Ingress is a routing rule that the Application Gateway turns into real configuration.");
     footer(s, 8);
   }
 
@@ -360,7 +369,7 @@ async function main() {
   {
     const s = pres.addSlide();
     s.background = { color: WHITE };
-    s.addText("Where This Pattern Fits", { x: 0.6, y: 0.4, w: 10, h: 0.6, fontSize: 30, bold: true, color: INK, fontFace: "Cambria", isTextBox: true });
+    s.addText("Where I'd Use This Pattern", { x: 0.6, y: 0.4, w: 10, h: 0.6, fontSize: 30, bold: true, color: INK, fontFace: "Cambria", isTextBox: true });
 
     const cases = [
       ["building", "Company websites with an SLA", "Where “the site is down” is a business incident, not an inconvenience"],
@@ -378,6 +387,7 @@ async function main() {
       s.addText(title, { x: x + 1.2, y: y + 0.3, w: cardW - 1.5, h: 0.7, fontSize: 15, bold: true, color: INK, fontFace: "Calibri", isTextBox: true, valign: "top", lineSpacingMultiple: 1.1 });
       s.addText(desc, { x: x + 0.3, y: y + 1.25, w: cardW - 0.6, h: 0.9, fontSize: 11, color: MUTED, fontFace: "Calibri", isTextBox: true, lineSpacingMultiple: 1.2 });
     });
+    s.addNotes("This isn't only a lab. I'd use this same pattern for a company website with an availability target, for internal line-of-business apps that need a public front door, and as a reference for clients whose procurement teams ask hard security questions.");
     footer(s, 9);
   }
 
@@ -389,7 +399,7 @@ async function main() {
     s.background = { color: NAVY };
     iconCircle(s, "checkWhite", 0.6, 0.5, 0.7, NAVY_DARK, 0.6);
     s.addText("Proof, Not Just Claims", { x: 1.5, y: 0.5, w: 10, h: 0.6, fontSize: 28, bold: true, color: WHITE, fontFace: "Cambria", isTextBox: true });
-    s.addText("Real command output, captured live from both environments", {
+    s.addText("Everything below was captured from my own Azure tenant, not mocked up", {
       x: 1.5, y: 1.05, w: 10, h: 0.4, fontSize: 13, color: ICE, fontFace: "Calibri", isTextBox: true });
 
     const term = (x, y, w, h, title, lines) => {
@@ -401,17 +411,22 @@ async function main() {
       s.addText(lines, { x: x + 0.25, y: y + 0.45, w: w - 0.5, h: h - 0.6, fontSize: 10, color: ACCENT, fontFace: "Courier New", isTextBox: true, lineSpacingMultiple: 1.25 });
     };
 
-    term(0.6, 1.65, 3.9, 2.1, "curl — prod", "HTTP/1.1 200 OK\nServer: nginx/1.27.5\n\n$ curl .../healthz\nok");
-    term(4.75, 1.65, 3.9, 2.1, "kubectl get pods — prod", "demo-web-ccc969478-8cmfs\n  1/1  Running\ndemo-web-ccc969478-lmgm2\n  1/1  Running");
-    term(8.9, 1.65, 3.83, 2.1, "App Gateway backend health", "10.31.0.103   Healthy\n10.31.0.136   Healthy\n\n(both environments)");
+    term(0.6, 1.6, 3.9, 1.95, "curl — prod", "HTTP/1.1 200 OK\nServer: nginx/1.27.5\n\n$ curl .../healthz\nok");
+    term(4.75, 1.6, 3.9, 1.95, "kubectl get pods — prod", "demo-web-ccc969478-8cmfs\n  1/1  Running\ndemo-web-ccc969478-lmgm2\n  1/1  Running");
+    term(8.9, 1.6, 3.83, 1.95, "App Gateway backend health", "10.31.0.103   Healthy\n10.31.0.136   Healthy\n\n(both environments)");
 
-    s.addShape("roundRect", { x: 0.6, y: 4.05, w: 12.13, h: 1.75, fill: { color: NAVY_DARK }, line: { type: "none" }, rectRadius: 0.1 });
-    s.addText("12 pieces of evidence in the repo", { x: 0.95, y: 4.25, w: 8, h: 0.4, fontSize: 13, bold: true, color: WHITE, fontFace: "Calibri", isTextBox: true });
-    s.addText(
-      "Resource groups · node pool health · private DNS zone · kubectl get nodes · pods running · backend health · " +
-      "end-to-end curl · cluster overview · Defender inventory — across both dev and prod, screenshots and raw command output alike.",
-      { x: 0.95, y: 4.65, w: 11.4, h: 1.0, fontSize: 11, color: ICE, fontFace: "Calibri", isTextBox: true, lineSpacingMultiple: 1.3 }
-    );
+    // real screenshots (cropped: no account details, no other tabs)
+    s.addImage({ path: path.join(__dirname, "assets", "prod-nodes-ready.png"), x: 0.6, y: 3.85, w: 7.9, h: 7.9 * 215 / 1842 });
+    s.addText("kubectl get nodes on prod, run through az aks command invoke: 3 system and 2 user nodes, all Ready", {
+      x: 0.6, y: 3.85 + 7.9 * 215 / 1842 + 0.05, w: 7.9, h: 0.3, fontSize: 9.5, italic: true, color: "8891C0", fontFace: "Calibri", isTextBox: true });
+    s.addImage({ path: path.join(__dirname, "assets", "resource-groups-crop.png"), x: 0.6, y: 5.3, w: 5.0, h: 5.0 * 250 / 1190 });
+    s.addText("Azure portal: dev and prod resource groups, plus the AKS-managed node groups", {
+      x: 5.75, y: 5.5, w: 2.75, h: 0.75, fontSize: 9.5, italic: true, color: "8891C0", fontFace: "Calibri", isTextBox: true, valign: "top" });
+    s.addShape("roundRect", { x: 8.85, y: 3.85, w: 3.88, h: 2.5, fill: { color: NAVY_DARK }, line: { type: "none" }, rectRadius: 0.1 });
+    s.addText("What I'd point out", { x: 9.1, y: 4.0, w: 3.4, h: 0.4, fontSize: 13, bold: true, color: WHITE, fontFace: "Calibri", isTextBox: true });
+    s.addText("Both environments are live and separate. Twelve pieces of evidence are in the repo: node health, private DNS, pods, backend health, end-to-end curl and Defender inventory, for dev and prod.", {
+      x: 9.1, y: 4.4, w: 3.4, h: 1.85, fontSize: 10.5, color: ICE, fontFace: "Calibri", isTextBox: true, lineSpacingMultiple: 1.25 });
+    s.addNotes("I don't want you to take my word for it. On the left is the real output of kubectl get nodes against prod, run the way my pipeline runs it, through Azure and not over a VPN. Below it is the Azure portal showing the dev and prod resource groups. The full set of evidence is in the repository, and everything here has been cropped so no account details are shown.");
     footer(s, 10, true);
   }
 
@@ -437,11 +452,11 @@ async function main() {
     s.addShape("line", { x: W / 2 - 2, y: 5.15, w: 4, h: 0, line: { color: "3B4590", width: 1 } });
     s.addText("Sufyan Deen-Gabisi", { x: 0.8, y: 5.35, w: W - 1.6, h: 0.4, fontSize: 15, bold: true, color: WHITE, align: "center", fontFace: "Calibri", isTextBox: true });
     s.addText("github.com/sufideen/az-ent-sec-dashboard", { x: 0.8, y: 5.75, w: W - 1.6, h: 0.35, fontSize: 12, color: ACCENT, align: "center", fontFace: "Calibri", isTextBox: true });
-    s.addText("Full technical write-up, evidence, and runbook in the repository's docs/ folder", {
+    s.addText("The full write-up, evidence and runbook are in the docs/ folder of the repository", {
       x: 0.8, y: 6.15, w: W - 1.6, h: 0.35, fontSize: 10.5, color: "8891C0", align: "center", fontFace: "Calibri", isTextBox: true });
+    s.addNotes("To sum up: I can design a private, zero-secret Kubernetes platform on Azure, automate its delivery, and when it breaks in production, work through it methodically. The repository has everything, including the incident write-up. I'm happy to take questions, and to go deeper on any slide.");
   }
 
-  const path = require("path");
   const outPath = path.join(__dirname, "..", "..", "docs", "webplat-kubernetes-showcase.pptx");
   await pres.writeFile({ fileName: outPath });
   console.log("Wrote", outPath);
