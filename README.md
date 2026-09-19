@@ -50,7 +50,7 @@ procedure.
 [`docs/kubernetes-showcase.md`](docs/kubernetes-showcase.md) — a
 portfolio-oriented walkthrough (architecture, cluster breakdown, glossary,
 use cases, real incident, evidence, and a
-[slide deck](docs/webplat-kubernetes-showcase.pptx)) built for a technical
+[slide deck](docs/webplat-kubernetes-showcase.pdf), also as [PowerPoint](docs/webplat-kubernetes-showcase.pptx)) built for a technical
 reviewer who wants the story, not just the file tree.
 
 **Design documentation**, split by audience:
