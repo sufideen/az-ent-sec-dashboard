@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1E2761"/>
+    </marker>
+  </defs>
+  <rect width="1000" height="640" fill="#FFFFFF"/>
+  <text x="500" y="36" text-anchor="middle" font-size="22" font-weight="bold" fill="#1A1A2E">System Context — webplat</text>
+  <text x="500" y="58" text-anchor="middle" font-size="13" fill="#5C6B8A">Who and what interacts with the platform, and why</text>
+
+  <!-- Center system boundary -->
+  <rect x="330" y="260" width="340" height="140" rx="10" fill="#1E2761"/>
+  <text x="500" y="315" text-anchor="middle" font-size="17" font-weight="bold" fill="#FFFFFF">webplat</text>
+  <text x="500" y="338" text-anchor="middle" font-size="11.5" fill="#CADCFC">Private AKS + ACR + Key Vault</text>
+  <text x="500" y="356" text-anchor="middle" font-size="11.5" fill="#CADCFC">+ Application Gateway (WAF)</text>
+  <text x="500" y="378" text-anchor="middle" font-size="10.5" fill="#00D9C0">dev + prod, fully independent</text>
+
+  <!-- Actor: End users -->
+  <rect x="60" y="40" width="220" height="90" rx="8" fill="#F4F7FE" stroke="#9AA7CE"/>
+  <text x="170" y="72" text-anchor="middle" font-size="14" font-weight="bold" fill="#1A1A2E">End users</text>
+  <text x="170" y="92" text-anchor="middle" font-size="11" fill="#5C6B8A">Public internet</text>
+  <text x="170" y="108" text-anchor="middle" font-size="11" fill="#5C6B8A">Browsers / HTTP clients</text>
+  <path d="M280,110 L420,260" stroke="#1E2761" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="292" y="170" width="180" height="36" fill="#FFFFFF"/>
+  <text x="300" y="185" font-size="11" fill="#1A1A2E">HTTPS · TLS terminated</text>
+  <text x="300" y="200" font-size="11" fill="#1A1A2E">at the Application Gateway</text>
+
+  <!-- Actor: Azure Administrator -->
+  <rect x="60" y="480" width="220" height="100" rx="8" fill="#F4F7FE" stroke="#9AA7CE"/>
+  <text x="170" y="512" text-anchor="middle" font-size="14" font-weight="bold" fill="#1A1A2E">Azure Administrator</text>
+  <text x="170" y="532" text-anchor="middle" font-size="11" fill="#5C6B8A">Entra ID group member</text>
+  <text x="170" y="548" text-anchor="middle" font-size="11" fill="#5C6B8A">(AKS-WebPlat-Admins)</text>
+  <text x="170" y="564" text-anchor="middle" font-size="11" fill="#5C6B8A">No standing kubeconfig</text>
+  <path d="M280,510 L420,400" stroke="#1E2761" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="287" y="450" width="210" height="36" fill="#FFFFFF"/>
+  <text x="295" y="465" font-size="11" fill="#1A1A2E">az aks command invoke</text>
+  <text x="295" y="480" font-size="11" fill="#1A1A2E">(Azure RBAC for Kubernetes)</text>
+
+  <!-- Actor: GitHub Actions -->
+  <rect x="720" y="40" width="220" height="100" rx="8" fill="#F4F7FE" stroke="#9AA7CE"/>
+  <text x="830" y="72" text-anchor="middle" font-size="14" font-weight="bold" fill="#1A1A2E">GitHub Actions CI/CD</text>
+  <text x="830" y="92" text-anchor="middle" font-size="11" fill="#5C6B8A">bicep-lint · what-if · deploy</text>
+  <text x="830" y="108" text-anchor="middle" font-size="11" fill="#5C6B8A">build-push · app-deploy</text>
+  <text x="830" y="124" text-anchor="middle" font-size="11" fill="#5C6B8A">No stored Azure secrets</text>
+  <path d="M720,110 L580,260" stroke="#1E2761" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="520" y="170" width="180" height="36" fill="#FFFFFF"/>
+  <text x="700" y="185" font-size="11" fill="#1A1A2E" text-anchor="end">OIDC federated</text>
+  <text x="700" y="200" font-size="11" fill="#1A1A2E" text-anchor="end">credential, per workflow</text>
+
+  <!-- Actor: SOC / Sentinel -->
+  <rect x="720" y="480" width="220" height="100" rx="8" fill="#F4F7FE" stroke="#9AA7CE"/>
+  <text x="830" y="512" text-anchor="middle" font-size="14" font-weight="bold" fill="#1A1A2E">SOC / Sentinel platform</text>
+  <text x="830" y="532" text-anchor="middle" font-size="11" fill="#5C6B8A">Existing shared Log</text>
+  <text x="830" y="548" text-anchor="middle" font-size="11" fill="#5C6B8A">Analytics Workspace</text>
+  <text x="830" y="564" text-anchor="middle" font-size="11" fill="#5C6B8A">(layer 1/2 of this repo family)</text>
+  <path d="M580,400 L720,510" stroke="#1E2761" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="592" y="450" width="180" height="36" fill="#FFFFFF"/>
+  <text x="600" y="465" font-size="11" fill="#1A1A2E">Diagnostic logs — AKS,</text>
+  <text x="600" y="480" font-size="11" fill="#1A1A2E">ACR, Key Vault, Defender</text>
+
+  <!-- Actor: Azure Container Registry / Key Vault noted inline already; add note bottom -->
+  <text x="500" y="620" text-anchor="middle" font-size="10.5" fill="#5C6B8A">Full component-level detail: Logical Architecture diagram (02) · Network Topology diagram (03)</text>
+</svg>

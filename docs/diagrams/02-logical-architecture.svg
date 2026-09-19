@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1E2761"/>
+    </marker>
+  </defs>
+  <rect width="1000" height="900" fill="#FFFFFF"/>
+  <text x="500" y="36" text-anchor="middle" font-size="22" font-weight="bold" fill="#1A1A2E">Logical Architecture — webplat (per environment)</text>
+  <text x="500" y="58" text-anchor="middle" font-size="13" fill="#5C6B8A">Components, trust boundaries, and the identities that connect them</text>
+
+  <!-- Internet -->
+  <circle cx="500" cy="105" r="30" fill="#1E2761"/>
+  <text x="500" y="110" text-anchor="middle" font-size="11" fill="#FFFFFF" font-weight="bold">Internet</text>
+  <path d="M500,135 L500,175" stroke="#1E2761" stroke-width="2" fill="none" marker-end="url(#arrow2)"/>
+
+  <!-- App Gateway -->
+  <rect x="280" y="175" width="440" height="90" rx="8" fill="#1E2761"/>
+  <text x="500" y="205" text-anchor="middle" font-size="15" font-weight="bold" fill="#FFFFFF">Application Gateway (WAF_v2)</text>
+  <text x="500" y="226" text-anchor="middle" font-size="11" fill="#CADCFC">Public IP · TLS termination · OWASP managed ruleset</text>
+  <text x="500" y="244" text-anchor="middle" font-size="11" fill="#CADCFC">Dedicated subnet snet-appgw · NSG-restricted</text>
+  <path d="M500,265 L500,300" stroke="#1E2761" stroke-width="2" fill="none" marker-end="url(#arrow2)"/>
+  <text x="515" y="278" font-size="9.5" fill="#5C6B8A">AGIC add-on watches Ingress objects,</text>
+  <text x="515" y="291" font-size="9.5" fill="#5C6B8A">reconfigures listeners/backend pool</text>
+
+  <!-- AKS cluster boundary -->
+  <rect x="120" y="300" width="760" height="330" rx="10" fill="none" stroke="#1E2761" stroke-width="2" stroke-dasharray="6,4"/>
+  <text x="145" y="325" font-size="13" font-weight="bold" fill="#1E2761">AKS CLUSTER — private API server (no public control-plane IP)</text>
+
+  <!-- system pool -->
+  <rect x="160" y="345" width="330" height="150" rx="8" fill="#F4F7FE" stroke="#9AA7CE"/>
+  <text x="325" y="372" text-anchor="middle" font-size="13" font-weight="bold" fill="#1A1A2E">System node pool</text>
+  <text x="325" y="392" text-anchor="middle" font-size="10.5" fill="#5C6B8A">mode=System</text>
+  <text x="325" y="408" text-anchor="middle" font-size="10.5" fill="#5C6B8A">CriticalAddonsOnly taint</text>
+  <text x="325" y="424" text-anchor="middle" font-size="10.5" fill="#5C6B8A">AGIC · Key Vault CSI · Azure Policy</text>
+  <text x="325" y="440" text-anchor="middle" font-size="10.5" fill="#5C6B8A">add-ons only — no app workloads</text>
+  <text x="325" y="462" text-anchor="middle" font-size="9.5" fill="#00D9C0" font-weight="bold">snet-aks (standard Azure CNI)</text>
+
+  <!-- user pool -->
+  <rect x="510" y="345" width="330" height="150" rx="8" fill="#F4F7FE" stroke="#00D9C0" stroke-width="1.5"/>
+  <text x="675" y="372" text-anchor="middle" font-size="13" font-weight="bold" fill="#1A1A2E">User node pool (autoscaling)</text>
+  <text x="675" y="392" text-anchor="middle" font-size="10.5" fill="#5C6B8A">mode=User</text>
+  <text x="675" y="408" text-anchor="middle" font-size="10.5" fill="#5C6B8A">namespace: demo-web</text>
+  <text x="675" y="424" text-anchor="middle" font-size="10.5" fill="#5C6B8A">Deployment · Service · Ingress</text>
+  <text x="675" y="440" text-anchor="middle" font-size="10.5" fill="#5C6B8A">HPA: 2–5 replicas on CPU 70%</text>
+  <text x="675" y="462" text-anchor="middle" font-size="9.5" fill="#00D9C0" font-weight="bold">snet-aks (standard Azure CNI)</text>
+
+  <!-- identities row -->
+  <text x="500" y="535" text-anchor="middle" font-size="11" font-weight="bold" fill="#1A1A2E">Managed identities (one per add-on — least privilege, no shared credential)</text>
+  <rect x="160" y="550" width="220" height="55" rx="6" fill="#FFFFFF" stroke="#9AA7CE"/>
+  <text x="270" y="572" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1A1A2E">kubelet identity</text>
+  <text x="270" y="590" text-anchor="middle" font-size="9.5" fill="#5C6B8A">AcrPull on the registry</text>
+
+  <rect x="400" y="550" width="220" height="55" rx="6" fill="#FFFFFF" stroke="#9AA7CE"/>
+  <text x="510" y="572" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1A1A2E">Key Vault CSI identity</text>
+  <text x="510" y="590" text-anchor="middle" font-size="9.5" fill="#5C6B8A">Secrets User + Cert User</text>
+
+  <rect x="640" y="550" width="220" height="55" rx="6" fill="#FFFFFF" stroke="#9AA7CE"/>
+  <text x="750" y="572" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#1A1A2E">AGIC identity</text>
+  <text x="750" y="590" text-anchor="middle" font-size="9.5" fill="#5C6B8A">Contributor on the Gateway</text>
+
+  <!-- arrows down to ACR / KV -->
+  <path d="M270,605 L270,650 L270,650" stroke="#1E2761" stroke-width="2" fill="none"/>
+  <path d="M270,650 L300,720" stroke="#1E2761" stroke-width="2" fill="none" marker-end="url(#arrow2)"/>
+  <path d="M510,605 L510,720" stroke="#1E2761" stroke-width="2" fill="none" marker-end="url(#arrow2)"/>
+
+  <!-- downstream services -->
+  <rect x="150" y="740" width="300" height="110" rx="8" fill="#1E2761"/>
+  <text x="300" y="768" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF">Azure Container Registry</text>
+  <text x="300" y="790" text-anchor="middle" font-size="10.5" fill="#CADCFC">Premium · private endpoint</text>
+  <text x="300" y="806" text-anchor="middle" font-size="10.5" fill="#CADCFC">No admin user — RBAC pull/push only</text>
+  <text x="300" y="822" text-anchor="middle" font-size="10.5" fill="#CADCFC">Public access allowed (CI runner reach)</text>
+  <text x="300" y="838" text-anchor="middle" font-size="9.5" fill="#00D9C0" font-weight="bold">snet-pe (private endpoint)</text>
+
+  <rect x="480" y="740" width="300" height="110" rx="8" fill="#1E2761"/>
+  <text x="630" y="768" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF">Azure Key Vault</text>
+  <text x="630" y="790" text-anchor="middle" font-size="10.5" fill="#CADCFC">RBAC-authorized · private endpoint</text>
+  <text x="630" y="806" text-anchor="middle" font-size="10.5" fill="#CADCFC">TLS cert storage (webplat-tls-cert)</text>
+  <text x="630" y="822" text-anchor="middle" font-size="10.5" fill="#CADCFC">Public access disabled by default</text>
+  <text x="630" y="838" text-anchor="middle" font-size="9.5" fill="#00D9C0" font-weight="bold">snet-pe (private endpoint)</text>
+
+  <text x="500" y="885" text-anchor="middle" font-size="10.5" fill="#5C6B8A">Diagnostics from AKS, ACR, and Key Vault all flow to the same shared Log Analytics Workspace — see System Context (01)</text>
+</svg>
