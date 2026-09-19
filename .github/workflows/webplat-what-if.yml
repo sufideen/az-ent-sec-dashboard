@@ -69,7 +69,7 @@ jobs:
 
       - name: Comment What-If result on PR
         if: always() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const configured = '${{ steps.check-rg.outputs.configured }}' === 'true';
