@@ -1,6 +1,6 @@
-App Gateway public IP: 20.0.211.251
+App Gateway public IP: 203.0.113.11
 
-$ curl -kI --resolve www.itsolutions.example.com:443:20.0.211.251 https://www.itsolutions.example.com/
+$ curl -kI --resolve www.itsolutions.example.com:443:203.0.113.11 https://www.itsolutions.example.com/
 HTTP/1.1 200 OK
 Date: Fri, 18 Sep 2026 15:17:28 GMT
 Content-Type: text/html
@@ -12,6 +12,6 @@ ETag: "6aabd60b-7f5"
 Accept-Ranges: bytes
 
 
-$ curl -k --resolve www.itsolutions.example.com:443:20.0.211.251 https://www.itsolutions.example.com/healthz
+$ curl -k --resolve www.itsolutions.example.com:443:203.0.113.11 https://www.itsolutions.example.com/healthz
 ok
 
