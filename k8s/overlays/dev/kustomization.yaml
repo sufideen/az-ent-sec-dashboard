@@ -32,10 +32,9 @@ patches:
         value: demo-web-tls-letsencrypt
       - op: add
         path: /metadata/annotations/cert-manager.io~1cluster-issuer
-        # Start on -staging to prove the HTTP-01 flow works (untrusted
-        # "Fake LE" cert is expected); switch to letsencrypt-prod once
-        # confirmed. See k8s/cluster-addons/cert-manager/cluster-issuer.yaml.
-        value: letsencrypt-staging
+        # Confirmed working on -staging (Certificate READY, Order valid,
+        # 2026-09-22) - now on the real issuer for a trusted cert.
+        value: letsencrypt-prod
   - target:
       kind: NetworkPolicy
       name: demo-web-allow-ingress-from-agic
