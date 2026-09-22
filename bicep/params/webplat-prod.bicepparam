@@ -8,10 +8,14 @@ param instance = '001'
 param regionCode = 'uks'
 
 // NOTE: no dedicated prod Log Analytics Workspace exists yet in this
-// subscription - pointed at the same dev-tier workspace as webplat-dev for
+// subscription - pointed at the same shared workspace as webplat-dev for
 // now. Repoint this at a real prod workspace once one exists.
-param existingLogAnalyticsWorkspaceName = 'law-ictlabs-central-dev-uksouth'
-param existingLogAnalyticsWorkspaceResourceGroup = 'rg-ictlabs-connectivity-dev-uksouth'
+// The original shared workspace (law-ictlabs-central-dev-uksouth in
+// rg-ictlabs-connectivity-dev-uksouth) no longer exists in this
+// subscription as of 2026-09-22 - repointed at the closest current
+// security-central workspace.
+param existingLogAnalyticsWorkspaceName = 'log-central-sec-sandbox'
+param existingLogAnalyticsWorkspaceResourceGroup = 'rg-security-sandbox'
 
 // Entra ID group object ID for "AKS-WebPlat-Admins" - replace with the real
 // group ID for the prod tenant before deploying. Members get Azure RBAC

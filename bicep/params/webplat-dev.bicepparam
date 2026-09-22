@@ -7,8 +7,13 @@ param workloadName = 'webplat'
 param instance = '001'
 param regionCode = 'uks'
 
-param existingLogAnalyticsWorkspaceName = 'law-ictlabs-central-dev-uksouth'
-param existingLogAnalyticsWorkspaceResourceGroup = 'rg-ictlabs-connectivity-dev-uksouth'
+// NOTE: the original shared workspace (law-ictlabs-central-dev-uksouth in
+// rg-ictlabs-connectivity-dev-uksouth) no longer exists in this subscription
+// as of 2026-09-22 - repointed at the closest current security-central
+// workspace. Repoint again if/when a dedicated ictlabs connectivity RG
+// reappears.
+param existingLogAnalyticsWorkspaceName = 'log-central-sec-sandbox'
+param existingLogAnalyticsWorkspaceResourceGroup = 'rg-security-sandbox'
 
 // Entra ID group object ID for "AKS-WebPlat-Admins" - replace with the real
 // group ID for the dev tenant before deploying. Members get Azure RBAC
