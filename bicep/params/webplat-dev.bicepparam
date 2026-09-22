@@ -12,7 +12,7 @@ param regionCode = 'uks'
 // as of 2026-09-22 - repointed at the closest current security-central
 // workspace. Repoint again if/when a dedicated ictlabs connectivity RG
 // reappears.
-param existingLogAnalyticsWorkspaceName = 'log-central-sec-sandbox'
+param existingLogAnalyticsWorkspaceName = 'law-central-sec-sandbox'
 param existingLogAnalyticsWorkspaceResourceGroup = 'rg-security-sandbox'
 
 // Entra ID group object ID for "AKS-WebPlat-Admins" - replace with the real
