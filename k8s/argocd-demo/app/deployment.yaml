@@ -1,0 +1,67 @@
+# Deliberately separate from demo-web: that app is owned by the push-based
+# pipeline (webplat-app-deploy.yml). Two deployers managing the same objects
+# would fight each other. This one is owned only by Argo CD.
+#
+# Demo: change `replicas` or PODINFO_UI_MESSAGE, commit to the branch the
+# Application tracks, and watch Argo CD pick it up (~3 min, or press
+# Refresh in the UI).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podinfo
+  labels:
+    app: podinfo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: podinfo
+  template:
+    metadata:
+      labels:
+        app: podinfo
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: podinfo
+          image: ghcr.io/stefanprodan/podinfo:6.15.0
+          command:
+            - ./podinfo
+            - --port=9898
+            - --level=info
+          ports:
+            - containerPort: 9898
+              name: http
+          env:
+            - name: PODINFO_UI_MESSAGE
+              value: "Deployed by Argo CD from Git"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 9898
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9898
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}

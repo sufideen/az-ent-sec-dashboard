@@ -1,0 +1,96 @@
+name: Argo CD Demo (dev only)
+
+# Temporary demo: installs Argo CD on the private dev AKS cluster and points
+# it at k8s/argocd-demo/app (pull-based GitOps), or removes it all again.
+# Uses `az aks command invoke` like webplat-app-deploy.yml, since the API
+# server has no public endpoint. Argo CD itself only needs outbound HTTPS
+# to GitHub, so it needs no inbound access to the cluster.
+#
+# The Argo CD admin password is NEVER printed here (this repo's Actions
+# logs are public). Read it via Portal -> AKS -> Run command:
+#   kubectl -n argocd get secret argocd-initial-admin-secret \
+#     -o jsonpath="{.data.password}" | base64 -d
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'install or uninstall'
+        type: choice
+        options: [install, uninstall]
+        required: true
+      target_revision:
+        description: 'Git branch the Argo CD Application tracks'
+        type: string
+        default: main
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ARGOCD_INSTALL_URL: https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.3/manifests/install.yaml
+
+jobs:
+  argocd:
+    name: Argo CD ${{ github.event.inputs.action }} - Dev
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID_WEBPLAT }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install Argo CD (server-side apply - its CRDs exceed client-side apply's annotation limit)
+        if: ${{ github.event.inputs.action == 'install' }}
+        run: |
+          RESULT=$(az aks command invoke \
+            -g ${{ vars.RESOURCE_GROUP_DEV_WEBPLAT }} \
+            -n ${{ vars.AKS_NAME_DEV }} \
+            --command "kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f - && kubectl apply -n argocd --server-side --force-conflicts -f $ARGOCD_INSTALL_URL" -o json)
+          echo "$RESULT" | jq -r '.logs'
+          exit "$(echo "$RESULT" | jq -r '.exitCode')"
+
+      - name: Configure UI ingress (TLS at App Gateway) and wait for Argo CD
+        if: ${{ github.event.inputs.action == 'install' }}
+        run: |
+          cat k8s/argocd-demo/bootstrap/argocd-cmd-params-cm.yaml <(echo '---') \
+              k8s/argocd-demo/bootstrap/ingress.yaml > /tmp/argocd-config.yaml
+          RESULT=$(az aks command invoke \
+            -g ${{ vars.RESOURCE_GROUP_DEV_WEBPLAT }} \
+            -n ${{ vars.AKS_NAME_DEV }} \
+            --command "kubectl apply --server-side --force-conflicts -f argocd-config.yaml && kubectl -n argocd rollout restart deploy/argocd-server && kubectl -n argocd rollout status deploy --timeout=300s && kubectl -n argocd rollout status statefulset/argocd-application-controller --timeout=300s" \
+            --file /tmp/argocd-config.yaml -o json)
+          echo "$RESULT" | jq -r '.logs'
+          exit "$(echo "$RESULT" | jq -r '.exitCode')"
+
+      - name: Create the Application and wait for Synced + Healthy
+        if: ${{ github.event.inputs.action == 'install' }}
+        env:
+          TARGET_REVISION: ${{ github.event.inputs.target_revision }}
+        run: |
+          mkdir -p /tmp/argocd-app
+          sed "s#REPLACE_WITH_TARGET_REVISION#${TARGET_REVISION}#" \
+            k8s/argocd-demo/bootstrap/application.yaml > /tmp/argocd-app/application.yaml
+          cp k8s/argocd-demo/bootstrap/wait-for-app.sh /tmp/argocd-app/
+          RESULT=$(az aks command invoke \
+            -g ${{ vars.RESOURCE_GROUP_DEV_WEBPLAT }} \
+            -n ${{ vars.AKS_NAME_DEV }} \
+            --command "sh wait-for-app.sh" \
+            --file /tmp/argocd-app/application.yaml \
+            --file /tmp/argocd-app/wait-for-app.sh -o json)
+          echo "$RESULT" | jq -r '.logs'
+          exit "$(echo "$RESULT" | jq -r '.exitCode')"
+
+      - name: Uninstall (Application first, so its finalizer removes podinfo-demo)
+        if: ${{ github.event.inputs.action == 'uninstall' }}
+        run: |
+          RESULT=$(az aks command invoke \
+            -g ${{ vars.RESOURCE_GROUP_DEV_WEBPLAT }} \
+            -n ${{ vars.AKS_NAME_DEV }} \
+            --command "kubectl -n argocd delete application podinfo-demo --ignore-not-found --timeout=180s; kubectl -n argocd delete ingress argocd-server --ignore-not-found; kubectl delete -n argocd -f $ARGOCD_INSTALL_URL --ignore-not-found; kubectl delete namespace argocd podinfo-demo --ignore-not-found --timeout=300s; kubectl get ns" -o json)
+          echo "$RESULT" | jq -r '.logs'
+          exit "$(echo "$RESULT" | jq -r '.exitCode')"

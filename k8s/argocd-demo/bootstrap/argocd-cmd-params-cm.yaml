@@ -1,0 +1,13 @@
+# TLS is terminated at the Application Gateway (same pattern as demo-web),
+# so argocd-server serves plain HTTP inside the cluster. Without this it
+# redirects HTTP->HTTPS on its own port and AGIC's backend loops.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cmd-params-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  server.insecure: "true"
