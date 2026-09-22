@@ -7,7 +7,7 @@ name: Webplat Deploy
 
 on:
   push:
-    branches: [claude/azure-security-ops-platform-44dc1t]
+    branches: [main]
     paths:
       - 'bicep/webplat.bicep'
       - 'bicep/params/webplat-*.bicepparam'

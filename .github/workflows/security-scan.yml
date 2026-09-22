@@ -5,9 +5,9 @@ name: Security Scan
 
 on:
   pull_request:
-    branches: [claude/azure-security-ops-platform-44dc1t]
+    branches: [main]
   push:
-    branches: [claude/azure-security-ops-platform-44dc1t]
+    branches: [main]
 
 permissions:
   contents: read
