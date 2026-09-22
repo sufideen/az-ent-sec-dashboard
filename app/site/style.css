@@ -116,6 +116,8 @@ td.muted { color: var(--muted); }
   overflow-x: auto;
 }
 .diagram-box svg { display: block; width: 100%; height: auto; min-width: 640px; }
+.diagram-box.light { background: #ffffff; border-color: #d8e0f0; }
+.diagram-box.light img { display: block; width: 100%; height: auto; min-width: 640px; }
 footer.site {
   margin-top: 3.5rem;
   padding-top: 1.5rem;

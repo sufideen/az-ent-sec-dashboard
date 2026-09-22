@@ -135,7 +135,20 @@ async function main() {
   }
 
   // ======================================================================
-  // Slide 3 — Real incident: tonight's full rebuild
+  // Slide 3 — How It Actually Works (plain-English connectivity diagram)
+  // ======================================================================
+  {
+    const s = pres.addSlide();
+    s.background = { color: WHITE };
+    const imgPath = path.join(__dirname, "assets", "plain-english-connectivity.png");
+    // Image is 1200x675 (16:9) — same aspect as the slide, so it drops in edge-to-edge.
+    s.addImage({ path: imgPath, x: 0.75, y: 0.35, w: 11.65, h: 6.56 });
+    s.addNotes("For anyone in the room who isn't deep into Kubernetes, here's the same design in plain language. A visitor's traffic travels over a locked connection, past a guarded front door that blocks attacks, into a vault with no public entrance. Separately, updates are delivered using a temporary digital ID that expires in minutes — never a stored password. Same system as the last slide, just described for a general audience.");
+    footer(s, 3);
+  }
+
+  // ======================================================================
+  // Slide 4 — Real incident: tonight's full rebuild
   // ======================================================================
   {
     const s = pres.addSlide();
@@ -164,11 +177,11 @@ async function main() {
     s.addText("Full root-cause timeline: docs/webplat-architecture.md → “Incident: prod SecretProviderClass never patched” and the teardown/rebuild runbook", {
       x: 0.6, y: startY + layers.length * rowH + 0.15, w: 12, h: 0.4, fontSize: 10.5, italic: true, color: "8891C0", fontFace: "Calibri", isTextBox: true });
     s.addNotes("This is the slide I'm most glad to show. None of this is hypothetical — I tore this environment down myself a few hours ago and rebuilt it live, and each of these five things broke in turn, each one hiding the next. What I took from it: resource-group deletion doesn't just delete resources, it silently deletes every RBAC grant and cached identity pointing at them, and that's worth writing into the runbook.");
-    footer(s, 3, true);
+    footer(s, 4, true);
   }
 
   // ======================================================================
-  // Slide 4 — Closing
+  // Slide 5 — Closing
   // ======================================================================
   {
     const s = pres.addSlide();

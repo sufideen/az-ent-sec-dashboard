@@ -23,6 +23,13 @@
     Kustomize, entirely through GitHub Actions using OIDC — no long-lived
     Azure credentials anywhere in the pipeline.</p>
 
+  <h2><span class="num">01</span>The plain-English version</h2>
+  <p>Not a Kubernetes person? Start here — same system, no jargon.</p>
+  <div class="diagram-box light">
+    <img src="/assets/plain-english-connectivity.svg" alt="A visitor's request travels over a locked HTTPS connection, through a guarded front door that blocks attacks, into a private vault with no public entrance where the website runs. Separately, developers deliver updates through GitHub and Azure using a temporary digital ID that expires in minutes, never a stored password.">
+  </div>
+
+  <h2><span class="num">02</span>The technical version</h2>
   <div class="diagram-box">
     <svg viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif">
       <defs>
@@ -94,7 +101,7 @@
     </svg>
   </div>
 
-  <h2><span class="num">01</span>Network</h2>
+  <h2><span class="num">03</span>Network</h2>
   <p>A dedicated VNet with three subnets: <code>snet-aks</code> for nodes and
     pods (no direct inbound from the Internet), <code>snet-appgw</code> for
     the Application Gateway (443/80 from the Internet, plus the port range
@@ -102,7 +109,7 @@
     endpoints into ACR and Key Vault. Nothing reaches the cluster except
     through the Gateway.</p>
 
-  <h2><span class="num">02</span>Ingress &amp; TLS</h2>
+  <h2><span class="num">04</span>Ingress &amp; TLS</h2>
   <p>The Application Gateway Ingress Controller (AGIC) watches this app's
     Kubernetes <code>Ingress</code> object and reconfigures the Application
     Gateway automatically — no manual listener or routing-rule changes.
@@ -112,7 +119,7 @@
     renews the certificate before it expires — the same mechanism browsers
     trust for any public HTTPS site.</p>
 
-  <h2><span class="num">03</span>CI/CD</h2>
+  <h2><span class="num">05</span>CI/CD</h2>
   <p>Every push builds and pushes a container image to ACR, tagged with the
     commit SHA, then applies the Kubernetes manifests to the cluster via
     <code>az aks command invoke</code> — the only way a GitHub-hosted runner
