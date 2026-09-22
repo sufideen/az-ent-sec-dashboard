@@ -6,7 +6,7 @@ name: Webplat Build & Push Demo App
 
 on:
   push:
-    branches: [claude/azure-security-ops-platform-44dc1t]
+    branches: [main]
     paths:
       - 'app/**'
   workflow_dispatch:
