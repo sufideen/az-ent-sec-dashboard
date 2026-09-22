@@ -65,17 +65,42 @@ reviewer who wants the story, not just the file tree.
 
 > **Lab environments.** These are lab deployments used to demonstrate the design. Public IP addresses in the evidence files are replaced with documentation-range addresses (`203.0.113.x`), and the environments may be torn down when not in use.
 
-**Status**: both dev (`rg-itsolutions-webplat-dev-uks-001`) and prod
-(`rg-itsolutions-webplat-prod-uks-001`) are deployed and verified
-end-to-end — nodes `Ready`, `demo-web` pods `Running`, App Gateway backend
-pool `Healthy`, and `curl` through the public ingress returns the real app
-over HTTPS on both environments. Prod needed a live fix after initial
-deploy (see [Incident: prod SecretProviderClass](docs/webplat-architecture.md#incident-prod-secretproviderclass-never-patched)
-for what broke and why). Both environments can be torn down when no longer
-needed — see
+**Status** (as of 2026-09-22): both environments were fully torn down
+(resource groups deleted) after the initial demo cycle, per
 [Tearing down an environment](docs/webplat-architecture.md#tearing-down-an-environment).
+**Dev has since been rebuilt from scratch and re-verified end-to-end** —
+nodes `Ready`, `demo-web` pods `Running`, App Gateway backend pool
+`Healthy`, and `curl` through the public ingress returns the real app over
+HTTPS at `dev-webplat.ict-cloud.solutions`. **Prod is not yet redeployed.**
+
+Rebuilding from a full teardown surfaced a second class of incident beyond
+the original SecretProviderClass bug (see
+[Incident: prod SecretProviderClass](docs/webplat-architecture.md#incident-prod-secretproviderclass-never-patched)):
+several pieces of platform state don't come back automatically when a
+resource group is deleted and recreated, even though the Bicep/Kustomize
+source is unchanged —
+- RBAC role assignments (ARM-level *and* Kubernetes-level Azure RBAC) are
+  scoped to the resource and are deleted with it; they need re-granting to
+  the GitHub Actions service principal, admin users, and the AKS Key Vault
+  CSI managed identity
+- The Key Vault Secrets Provider add-on gets a **new** managed identity
+  client ID every time AKS is rebuilt, so any Kustomize overlay that
+  hardcodes `userAssignedIdentityID` goes stale and needs updating
+  ([`k8s/overlays/dev/kustomization.yaml`](k8s/overlays/dev/kustomization.yaml))
+- Key Vaults are soft-deleted (purge-protected), so a same-named vault has
+  to be recovered, not recreated
+- A shared dependency (the Log Analytics Workspace referenced by
+  `existingLogAnalyticsWorkspaceName`/`ResourceGroup`) can itself be
+  renamed or removed outside this repo's control
+- App Gateway gets a new public IP on rebuild, so any external DNS record
+  pointing at the old IP goes stale
+
+None of this is captured in Bicep/Kustomize today — it's manual `az` cleanup
+after a teardown-and-rebuild. See
+[`docs/lld-webplat-operations.md`](docs/lld-webplat-operations.md) for the
+day-2 operations playbook this session's fixes should be folded into.
 See [`docs/screenshots/webplat/`](docs/screenshots/webplat/) for the
-evidence checklist and captured output.
+evidence checklist and captured output from the original verified deploy.
 
 ## Repository structure
 
