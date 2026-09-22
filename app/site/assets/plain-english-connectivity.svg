@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1E2761"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="675" fill="#FFFFFF"/>
+
+  <text x="600" y="46" text-anchor="middle" font-size="28" font-weight="bold" fill="#1A1A2E">How It Actually Works</text>
+  <text x="600" y="70" text-anchor="middle" font-size="14" fill="#5C6B8A">No public doors. No stored passwords. Every step checked, every time.</text>
+
+  <!-- ============ ROW 1: A VISITOR'S JOURNEY ============ -->
+  <text x="60" y="102" font-size="12.5" font-weight="bold" fill="#0E7C86" letter-spacing="0.5">WHEN SOMEONE VISITS THE SITE</text>
+
+  <!-- Person -->
+  <circle cx="95" cy="230" r="42" fill="#1E2761"/>
+  <circle cx="95" cy="220" r="11" fill="#FFFFFF"/>
+  <path d="M 77 258 C 77 236 113 236 113 258 Z" fill="#FFFFFF"/>
+  <text x="95" y="296" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1A1A2E">Someone visits</text>
+  <text x="95" y="313" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1A1A2E">the website</text>
+
+  <!-- Arrow 1 + padlock -->
+  <path d="M142,230 L282,230" stroke="#1E2761" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 202 179 v -8 a 11 11 0 0 1 22 0 v 8" fill="none" stroke="#1E2761" stroke-width="4" stroke-linecap="round"/>
+  <rect x="197" y="179" width="32" height="26" rx="5" fill="#1E2761"/>
+  <circle cx="213" cy="190" r="3" fill="#FFFFFF"/>
+  <rect x="211" y="192" width="4" height="7" fill="#FFFFFF"/>
+  <text x="213" y="256" text-anchor="middle" font-size="12" fill="#1A1A2E">Locked, trusted</text>
+  <text x="213" y="271" text-anchor="middle" font-size="12" fill="#1A1A2E">connection (HTTPS)</text>
+
+  <!-- Guarded Front Door -->
+  <rect x="290" y="130" width="240" height="200" rx="14" fill="#F4F7FE" stroke="#00B39B" stroke-width="2"/>
+  <text x="410" y="156" text-anchor="middle" font-size="14" font-weight="bold" fill="#1E2761">GUARDED FRONT DOOR</text>
+  <path d="M 410 178 L 434 188 L 434 212 C 434 230 410 240 410 240 C 410 240 386 230 386 212 L 386 188 Z" fill="#00B39B"/>
+  <path d="M 400 208 l 7 8 l 14 -18" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="410" y="262" text-anchor="middle" font-size="12.5" fill="#1A1A2E">Checks every visitor,</text>
+  <text x="410" y="279" text-anchor="middle" font-size="12.5" fill="#1A1A2E">blocks attackers,</text>
+  <text x="410" y="296" text-anchor="middle" font-size="12.5" fill="#1A1A2E">then lets good traffic through</text>
+
+  <!-- Arrow 2 -->
+  <path d="M534,230 L586,230" stroke="#1E2761" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- The Vault -->
+  <rect x="590" y="100" width="550" height="260" rx="18" fill="#FFFFFF" stroke="#1E2761" stroke-width="3" stroke-dasharray="10,6"/>
+  <text x="615" y="132" font-size="15" font-weight="bold" fill="#1E2761">THE VAULT — no public entrance</text>
+  <text x="615" y="152" font-size="12" fill="#5C6B8A">The only way in is through the Guarded Front Door.</text>
+
+  <!-- Vault wheel icon -->
+  <circle cx="655" cy="250" r="34" fill="none" stroke="#1E2761" stroke-width="6"/>
+  <circle cx="655" cy="250" r="8" fill="#1E2761"/>
+  <line x1="665" y1="250" x2="685" y2="250" stroke="#1E2761" stroke-width="5"/>
+  <line x1="660" y1="258.7" x2="670" y2="276" stroke="#1E2761" stroke-width="5"/>
+  <line x1="650" y1="258.7" x2="640" y2="276" stroke="#1E2761" stroke-width="5"/>
+  <line x1="645" y1="250" x2="625" y2="250" stroke="#1E2761" stroke-width="5"/>
+  <line x1="650" y1="241.3" x2="640" y2="224" stroke="#1E2761" stroke-width="5"/>
+  <line x1="660" y1="241.3" x2="670" y2="224" stroke="#1E2761" stroke-width="5"/>
+
+  <!-- Website stacked cards -->
+  <rect x="750" y="200" width="280" height="110" rx="10" fill="#CADCFC"/>
+  <rect x="740" y="190" width="280" height="110" rx="10" fill="#1E2761"/>
+  <text x="880" y="230" text-anchor="middle" font-size="16" font-weight="bold" fill="#FFFFFF">Your Website</text>
+  <text x="880" y="254" text-anchor="middle" font-size="12" fill="#CADCFC">2 copies running</text>
+  <text x="880" y="272" text-anchor="middle" font-size="12" fill="#CADCFC">— so it never goes offline</text>
+
+  <!-- Divider -->
+  <line x1="60" y1="400" x2="1140" y2="400" stroke="#E2E8F5" stroke-width="1"/>
+
+  <!-- ============ ROW 2: SAFE UPDATES ============ -->
+  <text x="60" y="424" font-size="12.5" font-weight="bold" fill="#0E7C86" letter-spacing="0.5">MEANWHILE · HOW UPDATES GET DELIVERED, SAFELY</text>
+
+  <!-- Laptop -->
+  <rect x="70" y="488" width="50" height="32" rx="3" fill="#1E2761"/>
+  <rect x="75" y="492" width="40" height="22" fill="#CADCFC"/>
+  <path d="M 63 522 L 127 522 L 121 530 L 69 530 Z" fill="#1E2761"/>
+  <text x="95" y="558" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1A1A2E">A developer</text>
+  <text x="95" y="575" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1A1A2E">makes a change</text>
+
+  <!-- Arrow to GitHub -->
+  <path d="M142,510 L222,510" stroke="#1E2761" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- GitHub box -->
+  <rect x="228" y="460" width="160" height="100" rx="10" fill="#F4F7FE" stroke="#1E2761" stroke-width="2"/>
+  <text x="308" y="502" text-anchor="middle" font-size="14" font-weight="bold" fill="#1E2761">GITHUB</text>
+  <text x="308" y="522" text-anchor="middle" font-size="11.5" fill="#5C6B8A">code + pipeline</text>
+  <text x="308" y="538" text-anchor="middle" font-size="11.5" fill="#5C6B8A">(where the change lives)</text>
+
+  <!-- Arrow to key-x -->
+  <path d="M392,510 L462,510" stroke="#1E2761" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Key with X -->
+  <circle cx="481" cy="510" r="9" fill="none" stroke="#1E2761" stroke-width="4"/>
+  <rect x="489" y="507" width="22" height="6" fill="#1E2761"/>
+  <rect x="505" y="513" width="5" height="6" fill="#1E2761"/>
+  <rect x="511" y="513" width="5" height="8" fill="#1E2761"/>
+  <line x1="471" y1="490" x2="519" y2="530" stroke="#D64550" stroke-width="5" stroke-linecap="round"/>
+  <text x="495" y="558" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1A1A2E">No stored</text>
+  <text x="495" y="575" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1A1A2E">password — ever</text>
+
+  <!-- Arrow to ID badge -->
+  <path d="M536,510 L596,510" stroke="#1E2761" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- ID badge -->
+  <rect x="593" y="484" width="44" height="54" rx="8" fill="#FFFFFF" stroke="#1E2761" stroke-width="3"/>
+  <rect x="607" y="476" width="16" height="10" rx="3" fill="#1E2761"/>
+  <circle cx="615" cy="502" r="9" fill="#CADCFC" stroke="#1E2761" stroke-width="2"/>
+  <rect x="601" y="516" width="28" height="4" rx="2" fill="#9AA7CE"/>
+  <rect x="601" y="524" width="20" height="4" rx="2" fill="#9AA7CE"/>
+  <circle cx="633" cy="530" r="10" fill="#2FA36B"/>
+  <path d="M 628 530 l 4 4 l 8 -9" stroke="#FFFFFF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="615" y="558" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1A1A2E">A temporary ID</text>
+  <text x="615" y="575" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1A1A2E">expires in minutes</text>
+
+  <!-- Arrow to Azure -->
+  <path d="M652,510 L708,510" stroke="#1E2761" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Azure box -->
+  <rect x="714" y="460" width="160" height="100" rx="10" fill="#F4F7FE" stroke="#1E2761" stroke-width="2"/>
+  <text x="794" y="502" text-anchor="middle" font-size="14" font-weight="bold" fill="#1E2761">AZURE</text>
+  <text x="794" y="522" text-anchor="middle" font-size="11.5" fill="#5C6B8A">checks the ID,</text>
+  <text x="794" y="538" text-anchor="middle" font-size="11.5" fill="#5C6B8A">then allows the update</text>
+
+  <!-- Curve back up into the Vault -->
+  <path d="M860,460 C950,430 1030,400 1080,362" stroke="#1E2761" stroke-width="2.5" fill="none" stroke-dasharray="2,6" stroke-linecap="round" marker-end="url(#arrow)"/>
+  <text x="990" y="486" text-anchor="middle" font-size="12" fill="#1A1A2E">Delivers the update</text>
+  <text x="990" y="502" text-anchor="middle" font-size="12" fill="#1A1A2E">into the Vault, safely</text>
+
+  <text x="600" y="650" text-anchor="middle" font-size="12" font-style="italic" fill="#5C6B8A">This is exactly how tonight's live demo is built and deployed.</text>
+</svg>

@@ -23,3 +23,6 @@ Thumbs.db
 tests/**/TestResults/
 reports/
 *.trx
+
+# Slide deck build tooling
+scripts/slide-deck/node_modules/
