@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architecture - ITSolutions Web Platform</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="site">
+    <a class="brand" href="/">ITSolutions Web Platform</a>
+    <nav>
+      <a href="/">Overview</a>
+      <a href="/architecture.html" aria-current="page">Architecture</a>
+      <a href="/configuration.html">Configuration</a>
+    </nav>
+  </header>
+
+  <span class="badge">ARCHITECTURE</span>
+  <h1>How this environment is built</h1>
+  <p class="lede">One workload (<code>webplat</code>), deployed by Bicep and
+    Kustomize, entirely through GitHub Actions using OIDC — no long-lived
+    Azure credentials anywhere in the pipeline.</p>
+
+  <div class="diagram-box">
+    <svg viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif">
+      <defs>
+        <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,6 L8,3 z" fill="#4f8cff"/>
+        </marker>
+      </defs>
+
+      <!-- GitHub Actions -->
+      <rect x="30" y="20" width="220" height="70" rx="10" fill="#121b2e" stroke="#22314f"/>
+      <text x="140" y="48" text-anchor="middle" font-size="13" font-weight="700" fill="#e6ecf5">GitHub Actions</text>
+      <text x="140" y="66" text-anchor="middle" font-size="10.5" fill="#93a2bd">build, push, deploy</text>
+
+      <path d="M250,55 L370,55" stroke="#4f8cff" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+      <text x="255" y="46" font-size="9.5" fill="#93a2bd">OIDC federated token</text>
+
+      <!-- Azure AD -->
+      <rect x="370" y="20" width="180" height="70" rx="10" fill="#121b2e" stroke="#22314f"/>
+      <text x="460" y="48" text-anchor="middle" font-size="13" font-weight="700" fill="#e6ecf5">Microsoft Entra ID</text>
+      <text x="460" y="66" text-anchor="middle" font-size="10.5" fill="#93a2bd">no stored secrets</text>
+
+      <!-- Internet user -->
+      <circle cx="450" cy="150" r="26" fill="#4f8cff"/>
+      <text x="450" y="155" text-anchor="middle" font-size="11" fill="#0b1220" font-weight="700">You</text>
+      <path d="M450,176 L450,215" stroke="#4f8cff" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+      <text x="460" y="200" font-size="9.5" fill="#93a2bd">HTTPS</text>
+
+      <!-- App Gateway -->
+      <rect x="230" y="215" width="440" height="80" rx="10" fill="#121b2e" stroke="#35d6a8" stroke-width="1.5"/>
+      <text x="450" y="245" text-anchor="middle" font-size="14" font-weight="700" fill="#e6ecf5">Application Gateway (WAF_v2)</text>
+      <text x="450" y="264" text-anchor="middle" font-size="10.5" fill="#93a2bd">TLS termination · Let's Encrypt cert · OWASP managed ruleset</text>
+      <text x="450" y="280" text-anchor="middle" font-size="10.5" fill="#93a2bd">public IP, dedicated subnet</text>
+
+      <path d="M450,295 L450,335" stroke="#4f8cff" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+      <!-- AKS boundary -->
+      <rect x="80" y="335" width="740" height="230" rx="12" fill="none" stroke="#4f8cff" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <text x="100" y="358" font-size="12.5" font-weight="700" fill="#4f8cff">PRIVATE AKS CLUSTER — no public API server</text>
+
+      <!-- system pool -->
+      <rect x="110" y="375" width="330" height="165" rx="8" fill="#0f1a2e" stroke="#22314f"/>
+      <text x="275" y="398" text-anchor="middle" font-size="12" font-weight="700" fill="#e6ecf5">System node pool</text>
+      <text x="275" y="418" text-anchor="middle" font-size="10" fill="#93a2bd">AGIC — reconciles this Ingress</text>
+      <text x="275" y="435" text-anchor="middle" font-size="10" fill="#93a2bd">cert-manager — solves the ACME</text>
+      <text x="275" y="450" text-anchor="middle" font-size="10" fill="#93a2bd">HTTP-01 challenge, renews the cert</text>
+      <text x="275" y="467" text-anchor="middle" font-size="10" fill="#93a2bd">Key Vault Secrets Provider (prod only)</text>
+      <text x="275" y="484" text-anchor="middle" font-size="10" fill="#93a2bd">Azure Policy add-on</text>
+      <text x="275" y="510" text-anchor="middle" font-size="9.5" fill="#35d6a8" font-weight="700">add-ons only — no app workloads</text>
+
+      <!-- user pool -->
+      <rect x="460" y="375" width="330" height="165" rx="8" fill="#0f1a2e" stroke="#22314f"/>
+      <text x="625" y="398" text-anchor="middle" font-size="12" font-weight="700" fill="#e6ecf5">User node pool (autoscaling)</text>
+      <text x="625" y="418" text-anchor="middle" font-size="10" fill="#93a2bd">namespace: demo-web</text>
+      <text x="625" y="435" text-anchor="middle" font-size="10" fill="#93a2bd">this page — served by nginx</text>
+      <text x="625" y="452" text-anchor="middle" font-size="10" fill="#93a2bd">runs non-root, read-only rootfs</text>
+      <text x="625" y="469" text-anchor="middle" font-size="10" fill="#93a2bd">HPA: 2-5 replicas on CPU 70%</text>
+      <text x="625" y="486" text-anchor="middle" font-size="10" fill="#93a2bd">default-deny NetworkPolicy</text>
+
+      <path d="M275,540 L275,555 L310,585" stroke="#4f8cff" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+      <path d="M625,540 L625,555 L590,585" stroke="#4f8cff" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+      <!-- ACR -->
+      <rect x="180" y="585" width="260" height="30" rx="8" fill="#121b2e" stroke="#22314f"/>
+      <text x="310" y="605" text-anchor="middle" font-size="11" fill="#e6ecf5">Azure Container Registry — kubelet identity pull</text>
+
+      <!-- Let's Encrypt -->
+      <rect x="460" y="585" width="260" height="30" rx="8" fill="#121b2e" stroke="#22314f"/>
+      <text x="590" y="605" text-anchor="middle" font-size="11" fill="#e6ecf5">Let's Encrypt — ACME HTTP-01</text>
+    </svg>
+  </div>
+
+  <h2><span class="num">01</span>Network</h2>
+  <p>A dedicated VNet with three subnets: <code>snet-aks</code> for nodes and
+    pods (no direct inbound from the Internet), <code>snet-appgw</code> for
+    the Application Gateway (443/80 from the Internet, plus the port range
+    Azure's own health probes need), and <code>snet-pe</code> for private
+    endpoints into ACR and Key Vault. Nothing reaches the cluster except
+    through the Gateway.</p>
+
+  <h2><span class="num">02</span>Ingress &amp; TLS</h2>
+  <p>The Application Gateway Ingress Controller (AGIC) watches this app's
+    Kubernetes <code>Ingress</code> object and reconfigures the Application
+    Gateway automatically — no manual listener or routing-rule changes.
+    TLS terminates at the Gateway using a certificate issued by
+    <strong>Let's Encrypt</strong> via <code>cert-manager</code>, which
+    proves domain ownership with an automated ACME HTTP-01 challenge and
+    renews the certificate before it expires — the same mechanism browsers
+    trust for any public HTTPS site.</p>
+
+  <h2><span class="num">03</span>CI/CD</h2>
+  <p>Every push builds and pushes a container image to ACR, tagged with the
+    commit SHA, then applies the Kubernetes manifests to the cluster via
+    <code>az aks command invoke</code> — the only way a GitHub-hosted runner
+    (no VNet line-of-sight) can reach a cluster with no public API server,
+    without a VPN, self-hosted runner, or Bastion host.</p>
+
+  <footer class="site">
+    See <a href="/configuration.html">Configuration</a> for the exact
+    settings, or the full design docs in the repository's
+    <code>docs/</code> folder.
+  </footer>
+</div>
+</body>
+</html>

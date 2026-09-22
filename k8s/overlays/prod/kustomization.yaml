@@ -3,6 +3,11 @@ kind: Kustomization
 namespace: demo-web
 resources:
   - ../../base
+  # Prod keeps the Key Vault CSI TLS pattern (dev switched to cert-manager +
+  # Let's Encrypt - see k8s/overlays/dev/kustomization.yaml). Not part of
+  # base by default since it couples app pod readiness to Key Vault/
+  # identity health (see k8s/base/deployment.yaml comment).
+  - ../../base/tls-keyvault-csi
 images:
   - name: demo-web
     # Substituted by webplat-app-deploy.yml at deploy time (sed) with the
@@ -17,6 +22,25 @@ patches:
       - op: replace
         path: /spec/replicas
         value: 3
+      - op: add
+        path: /spec/template/spec/volumes/-
+        value:
+          name: webplat-tls-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: webplat-tls
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value:
+          # Unused by nginx itself (TLS terminates at the Application
+          # Gateway) - mounting this is what triggers the Secrets Store
+          # CSI driver to actually sync the TLS cert from Key Vault into
+          # the webplat-tls Kubernetes Secret the Ingress references.
+          name: webplat-tls-secrets
+          mountPath: /mnt/secrets-store
+          readOnly: true
   - target:
       kind: HorizontalPodAutoscaler
       name: demo-web
@@ -34,6 +58,9 @@ patches:
       - op: replace
         path: /spec/tls/0/hosts/0
         value: www.itsolutions.example.com
+      - op: replace
+        path: /spec/tls/0/secretName
+        value: webplat-tls
   - target:
       kind: NetworkPolicy
       name: demo-web-allow-ingress-from-agic

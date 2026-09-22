@@ -1,0 +1,7 @@
+# Wraps secretproviderclass.yaml as its own mini-base so overlays that want
+# it (prod) can reference this directory - a bare sibling file path isn't
+# allowed by kustomize's default load restrictor.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - secretproviderclass.yaml
