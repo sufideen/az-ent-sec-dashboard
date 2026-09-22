@@ -1,0 +1,26 @@
+# The one object that turns Argo CD on for this repo: "keep namespace
+# podinfo-demo matching k8s/argocd-demo/app at <targetRevision>".
+# targetRevision is substituted by argocd-demo.yml (defaults to main).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: podinfo-demo
+  namespace: argocd
+  # Deleting the Application also deletes everything it deployed.
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/sufideen/az-ent-sec-dashboard.git
+    targetRevision: REPLACE_WITH_TARGET_REVISION
+    path: k8s/argocd-demo/app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: podinfo-demo
+  syncPolicy:
+    automated:
+      prune: true     # resource removed from Git -> removed from cluster
+      selfHeal: true  # manual kubectl change -> reverted to Git
+    syncOptions:
+      - CreateNamespace=true
