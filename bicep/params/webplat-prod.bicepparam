@@ -14,7 +14,7 @@ param regionCode = 'uks'
 // rg-ictlabs-connectivity-dev-uksouth) no longer exists in this
 // subscription as of 2026-09-22 - repointed at the closest current
 // security-central workspace.
-param existingLogAnalyticsWorkspaceName = 'log-central-sec-sandbox'
+param existingLogAnalyticsWorkspaceName = 'law-central-sec-sandbox'
 param existingLogAnalyticsWorkspaceResourceGroup = 'rg-security-sandbox'
 
 // Entra ID group object ID for "AKS-WebPlat-Admins" - replace with the real
