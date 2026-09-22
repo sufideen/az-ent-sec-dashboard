@@ -40,7 +40,7 @@ patches:
     patch: |-
       - op: replace
         path: /spec/parameters/userAssignedIdentityID
-        value: 9dd4c91c-7963-434b-9f80-805856a718d2
+        value: f78c6565-2975-407a-a041-9413818d107a
       - op: replace
         path: /spec/parameters/keyvaultName
         value: kvwebplatdev3r4cvt3hsiof
