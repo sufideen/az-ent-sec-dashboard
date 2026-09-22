@@ -5,12 +5,15 @@ metadata:
   namespace: demo-web
   annotations:
     appgw.ingress.kubernetes.io/ssl-redirect: "true"
+    # TLS source is overlay-specific - dev patches in a cert-manager
+    # ClusterIssuer annotation (Let's Encrypt); prod relies on the Key
+    # Vault CSI-synced Secret instead and adds no annotation here.
 spec:
   ingressClassName: azure-application-gateway
   tls:
     - hosts:
         - REPLACE_WITH_HOSTNAME
-      secretName: webplat-tls
+      secretName: REPLACE_WITH_TLS_SECRET_NAME
   rules:
     - host: REPLACE_WITH_HOSTNAME
       http:

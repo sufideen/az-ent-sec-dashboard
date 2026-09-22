@@ -60,15 +60,6 @@ spec:
               mountPath: /var/run
             - name: tmp
               mountPath: /tmp
-            # Unused by nginx itself (TLS terminates at the Application
-            # Gateway) - mounting this is what triggers the Secrets Store
-            # CSI driver to actually sync the TLS cert from Key Vault into
-            # the webplat-tls Kubernetes Secret the Ingress references.
-            # Without some pod mounting it, the SecretProviderClass alone
-            # never produces that Secret.
-            - name: webplat-tls-secrets
-              mountPath: /mnt/secrets-store
-              readOnly: true
       volumes:
         - name: nginx-cache
           emptyDir: {}
@@ -76,9 +67,13 @@ spec:
           emptyDir: {}
         - name: tmp
           emptyDir: {}
-        - name: webplat-tls-secrets
-          csi:
-            driver: secrets-store.csi.k8s.io
-            readOnly: true
-            volumeAttributes:
-              secretProviderClass: webplat-tls
+      # TLS delivery is intentionally NOT wired here in base - it's overlay-
+      # specific (see k8s/overlays/*/kustomization.yaml):
+      #   - prod patches in the Key Vault CSI volume/mount (see
+      #     k8s/base/secretproviderclass.yaml) - a real enterprise pattern,
+      #     but one that couples app pod readiness to Key Vault/identity
+      #     health, which is what caused this platform's very first
+      #     incident (see docs/webplat-architecture.md).
+      #   - dev uses cert-manager + Let's Encrypt instead: the TLS Secret
+      #     is produced entirely out-of-band by the cert-manager controller,
+      #     so the app pod never depends on it to become Ready.

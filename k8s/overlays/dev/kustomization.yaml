@@ -27,6 +27,15 @@ patches:
       - op: replace
         path: /spec/tls/0/hosts/0
         value: dev-webplat.ict-cloud.solutions
+      - op: replace
+        path: /spec/tls/0/secretName
+        value: demo-web-tls-letsencrypt
+      - op: add
+        path: /metadata/annotations/cert-manager.io~1cluster-issuer
+        # Start on -staging to prove the HTTP-01 flow works (untrusted
+        # "Fake LE" cert is expected); switch to letsencrypt-prod once
+        # confirmed. See k8s/cluster-addons/cert-manager/cluster-issuer.yaml.
+        value: letsencrypt-staging
   - target:
       kind: NetworkPolicy
       name: demo-web-allow-ingress-from-agic
@@ -35,15 +44,9 @@ patches:
         path: /spec/ingress/0/from/0/ipBlock/cidr
         value: 10.30.16.0/24
   - target:
-      kind: SecretProviderClass
-      name: webplat-tls
+      kind: NetworkPolicy
+      name: demo-web-allow-ingress-from-agic-acme-solver
     patch: |-
       - op: replace
-        path: /spec/parameters/userAssignedIdentityID
-        value: f78c6565-2975-407a-a041-9413818d107a
-      - op: replace
-        path: /spec/parameters/keyvaultName
-        value: kvwebplatdev3r4cvt3hsiof
-      - op: replace
-        path: /spec/parameters/tenantId
-        value: fc1d277f-2fcb-4721-b141-1e117c362266
+        path: /spec/ingress/0/from/0/ipBlock/cidr
+        value: 10.30.16.0/24

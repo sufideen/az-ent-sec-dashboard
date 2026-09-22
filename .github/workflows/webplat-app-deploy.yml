@@ -42,6 +42,23 @@ jobs:
             -e "s#REPLACE_WITH_ACR_LOGIN_SERVER#${{ vars.ACR_NAME_DEV }}.azurecr.io#g" \
             -e "s#REPLACE_WITH_IMAGE_TAG#${{ github.event.workflow_run.head_sha || github.sha }}#g" \
             k8s/overlays/dev/kustomization.yaml
+      - name: Install cert-manager (idempotent; dev uses Let's Encrypt for TLS)
+        run: |
+          RESULT=$(az aks command invoke \
+            -g ${{ vars.RESOURCE_GROUP_DEV_WEBPLAT }} \
+            -n ${{ vars.AKS_NAME_DEV }} \
+            --command "kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.2/cert-manager.yaml && kubectl -n cert-manager rollout status deploy/cert-manager --timeout=120s && kubectl -n cert-manager rollout status deploy/cert-manager-webhook --timeout=120s && kubectl -n cert-manager rollout status deploy/cert-manager-cainjector --timeout=120s" -o json)
+          echo "$RESULT" | jq -r '.logs'
+          exit "$(echo "$RESULT" | jq -r '.exitCode')"
+      - name: Apply cert-manager ClusterIssuers (Let's Encrypt)
+        run: |
+          RESULT=$(az aks command invoke \
+            -g ${{ vars.RESOURCE_GROUP_DEV_WEBPLAT }} \
+            -n ${{ vars.AKS_NAME_DEV }} \
+            --command "kubectl apply -f cluster-issuer.yaml" \
+            --file k8s/cluster-addons/cert-manager/cluster-issuer.yaml -o json)
+          echo "$RESULT" | jq -r '.logs'
+          exit "$(echo "$RESULT" | jq -r '.exitCode')"
       - name: Render manifests (kustomize build - avoids command invoke's flat --file limitation)
         run: kubectl kustomize k8s/overlays/dev > /tmp/rendered-dev.yaml
       - name: kubectl apply (dev) via command invoke

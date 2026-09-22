@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuration - ITSolutions Web Platform</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="site">
+    <a class="brand" href="/">ITSolutions Web Platform</a>
+    <nav>
+      <a href="/">Overview</a>
+      <a href="/architecture.html">Architecture</a>
+      <a href="/configuration.html" aria-current="page">Configuration</a>
+    </nav>
+  </header>
+
+  <span class="badge">CONFIGURATION</span>
+  <h1>Exactly what's running, and how it's locked down</h1>
+  <p class="lede">Every setting below is real, drawn from this environment's
+    Bicep and Kubernetes manifests — nothing hypothetical.</p>
+
+  <h2><span class="num">01</span>TLS</h2>
+  <table>
+    <tr><th>Issuer</th><td>Let's Encrypt, via <code>cert-manager</code></td></tr>
+    <tr><th>Challenge type</th><td>ACME HTTP-01 (domain-ownership proof over plain HTTP)</td></tr>
+    <tr><th>Renewal</th><td>Automatic — <code>cert-manager</code> renews before expiry, no manual step</td></tr>
+    <tr><th>Termination point</th><td>Application Gateway (not the pod — nginx never sees the private key)</td></tr>
+  </table>
+
+  <h2><span class="num">02</span>Identity &amp; access</h2>
+  <table>
+    <tr><th>AKS API server</th><td>Private — no public IP, no static kubeconfig cert</td></tr>
+    <tr><th>Cluster auth</th><td>Microsoft Entra ID + Azure RBAC for Kubernetes authorization</td></tr>
+    <tr><th>ACR access</th><td><code>AcrPull</code> on the node's kubelet managed identity — no admin user, no stored credential</td></tr>
+    <tr><th>CI/CD auth</th><td>GitHub Actions → Azure via OIDC federated credentials</td></tr>
+  </table>
+
+  <h2><span class="num">03</span>Pod security</h2>
+  <table>
+    <tr><th>User</th><td class="muted">non-root (<code>runAsNonRoot: true</code>)</td></tr>
+    <tr><th>Filesystem</th><td class="muted">read-only root filesystem</td></tr>
+    <tr><th>Capabilities</th><td class="muted">all Linux capabilities dropped</td></tr>
+    <tr><th>Privilege escalation</th><td class="muted">disabled</td></tr>
+    <tr><th>Seccomp</th><td class="muted"><code>RuntimeDefault</code></td></tr>
+  </table>
+
+  <h2><span class="num">04</span>Network policy (default-deny)</h2>
+  <ul class="plain">
+    <li>All ingress and egress denied by default in the <code>demo-web</code> namespace</li>
+    <li>Ingress allowed only from the Application Gateway subnet, on the app's container port</li>
+    <li>Ingress allowed for the <code>cert-manager</code> ACME solver pod, same source, while a certificate is being issued or renewed</li>
+    <li>Egress allowed only for DNS — this is a static site, it needs nothing else outbound</li>
+  </ul>
+
+  <h2><span class="num">05</span>Scaling</h2>
+  <table>
+    <tr><th>Baseline replicas</th><td>2</td></tr>
+    <tr><th>Autoscale range</th><td>2 – 5 replicas</td></tr>
+    <tr><th>Scale trigger</th><td>CPU utilization &gt; 70%</td></tr>
+  </table>
+
+  <h2><span class="num">06</span>Observability</h2>
+  <ul class="plain">
+    <li>AKS + ACR diagnostics flow into a shared Log Analytics Workspace</li>
+    <li>Microsoft Defender for Containers enabled on the cluster</li>
+    <li>Azure Policy add-on enforces platform-wide compliance policies on the node pools</li>
+  </ul>
+
+  <footer class="site">
+    Back to <a href="/architecture.html">Architecture</a> for how these
+    pieces connect, or the <a href="/">Overview</a>.
+  </footer>
+</div>
+</body>
+</html>
