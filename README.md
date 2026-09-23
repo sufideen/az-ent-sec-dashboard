@@ -97,6 +97,8 @@ source is unchanged —
 
 None of this is captured in Bicep/Kustomize today — it's manual `az` cleanup
 after a teardown-and-rebuild. See
+[`docs/dev-teardown-rebuild-runbook.md`](docs/dev-teardown-rebuild-runbook.md)
+for the verified, step-by-step sequence, and
 [`docs/lld-webplat-operations.md`](docs/lld-webplat-operations.md) for the
 day-2 operations playbook this session's fixes should be folded into.
 See [`docs/screenshots/webplat/`](docs/screenshots/webplat/) for the

@@ -314,6 +314,10 @@ is destructive and irreversible: confirm the environment (dev vs prod) and
 that nothing else has been added to that resource group out-of-band before
 running it.
 
+For exactly what a dev teardown destroys and the verified step-by-step
+sequence to bring it back up, see
+[`dev-teardown-rebuild-runbook.md`](dev-teardown-rebuild-runbook.md).
+
 ```bash
 # 1. Confirm what's actually in the RG before deleting anything
 az resource list -g rg-itsolutions-webplat-<env>-uks-001 -o table
