@@ -64,11 +64,11 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    SOC[SOC Analysts Group] -->|Sentinel Responder\nLog Analytics Reader\nWorkbook Reader| LAW[(Log Analytics Workspace)]
-    SecAdmin[Security Admins Group] -->|Sentinel Contributor\nSecurity Admin| LAW
-    Exec[Executives Group] -->|Sentinel Reader\nWorkbook Reader| LAW
-    Audit[Auditors Group] -->|Security Reader\nLog Analytics Reader| LAW
-    MI[Logic App Managed Identity] -->|Key Vault Secrets User\n(least privilege, single secret)| KV[(Key Vault)]
+    SOC[SOC Analysts Group] -->|"Sentinel Responder<br/>Log Analytics Reader<br/>Workbook Reader"| LAW[(Log Analytics Workspace)]
+    SecAdmin[Security Admins Group] -->|"Sentinel Contributor<br/>Security Admin"| LAW
+    Exec[Executives Group] -->|"Sentinel Reader<br/>Workbook Reader"| LAW
+    Audit[Auditors Group] -->|"Security Reader<br/>Log Analytics Reader"| LAW
+    MI[Logic App Managed Identity] -->|"Key Vault Secrets User<br/>(least privilege, single secret)"| KV[(Key Vault)]
 ```
 
 All role assignments are scoped directly to the Log Analytics Workspace resource (not the subscription or resource group), so a compromised or over-provisioned identity cannot reach beyond security telemetry and Sentinel. See `modules/rbac.bicep`.
